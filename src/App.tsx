@@ -78,9 +78,9 @@ import {
 } from './wallet'
 
 const pages: PageKey[] = ['home', 'launch', 'community', 'verify', 'detail']
-const appBuildId = 'rocket-20260625-factory-32949c'
-const appName = String(import.meta.env.VITE_APP_NAME ?? 'Rocket Launchpad')
-const appSymbol = String(import.meta.env.VITE_APP_SYMBOL ?? 'ROCKET')
+const appBuildId = 'pangu-20260727-launchpad'
+const appName = String(import.meta.env.VITE_APP_NAME ?? '盘古小拳头发射台')
+const appSymbol = String(import.meta.env.VITE_APP_SYMBOL ?? 'PANGU')
 const factoryExplorerUrl = `${BNB_CHAIN.blockExplorerUrls[0]}/address/${launchpadConfig.factoryAddress}#code`
 
 type Language = 'zh' | 'en'
@@ -159,24 +159,24 @@ const copy = {
       swapConfirmed: 'Swap 交易已确认。',
     },
     home: {
-      eyebrow: `${appName} 发射擂台`,
-      title: '把新币送上 PEPE 擂台',
+      eyebrow: `${appName}`,
+      title: '一键发币，链上自动开盘',
       subtitle:
-        '创建独立 ERC20 和 Mint 金库，配置 mint、税收、奖励和接收钱包。每一次上擂都会写入链上，确认后自动进入项目列表。',
-      launch: '部署新币',
+        '在 BNB Smart Chain 上快速创建属于你的 Meme 代币。独立合约、独立金库、自动回购、持币分红，全部规则写死在链上，不可篡改。',
+      launch: '立即发币',
       openCommunity: '加入社区',
-      consoleAria: 'PEPE 擂台发射流程',
+      consoleAria: '发币流程',
       consoleStats: [
-        ['擂台', appSymbol, '100,000'],
+        ['网络', 'BSC', '主网'],
         ['铸造', '300', '0.01 BNB'],
-        ['税费', '3 / 3', '销毁 + 持币分红'],
-        ['模式', 'Mint', '白名单可用'],
+        ['税费', '3 / 3', '销毁 + 分红'],
+        ['模式', 'Mint', '白名单'],
       ],
-      consoleFlow: ['钱包', '工厂合约', '代币 + 金库'],
+      consoleFlow: ['连接钱包', '工厂合约', '代币 + 金库'],
       features: [
-        ['01 上擂台', '0.005 BNB 创建发射合约', '连接钱包后直接发送真实部署交易；Factory 已部署并开源，项目确认后进入链上擂台。'],
-        ['02 开 Mint', 'Mint + 金库独立运行', '每个项目拥有独立 ERC20 和 Mint 金库，用户 mint 后立即获得真实代币余额。'],
-        ['03 守规则', '白名单和税收上链', '买卖税、奖励、销毁和白名单模式随项目创建写入链上，开盘和退款按合约规则执行。'],
+        ['01 部署', '0.005 BNB 创建代币', '真实链上交易，Factory 已开源验证。部署即上链，项目自动进入实时列表。'],
+        ['02 铸造', '独立 Mint 金库', '每个项目拥有独立 ERC20 和 Vault，用户 Mint 后即时到账，资产完全链上可查。'],
+        ['03 交易', '自动回购 + 分红', '买卖税自动回流，70% 销毁、30% 给 DOGE 持有者分红。打满后自动开盘并丢权限。'],
       ],
     },
     projects: {
@@ -204,7 +204,7 @@ const copy = {
       detail: '查看机制',
       trade: '去交易',
       website: '官网',
-      fallbackDescription: `${appName} 链上发射项目`,
+      fallbackDescription: `${appName} 链上发币项目`,
       quota: (whitelistMinted: string, whitelistTotal: string, publicMinted: string, publicTotal: string) =>
         `白名单 ${whitelistMinted}/${whitelistTotal} · 公开 ${publicMinted}/${publicTotal}`,
       whitelistManage: '添加白名单',
@@ -302,8 +302,8 @@ const copy = {
       switchNetwork: '切换网络',
       factoryUnset: '未配置',
       section01: '01 基础信息',
-      title: '部署你的发射代币',
-      intro: '填写名称、符号、头像和项目简介。',
+      title: '创建链上发射代币',
+      intro: '填写代币基础信息，所有参数将在链上公开透明。',
       feeBadge: '部署费 0.005 BNB',
       tokenName: '代币名称',
       tokenNamePlaceholder: '输入代币名称',
@@ -312,7 +312,7 @@ const copy = {
       avatar: '头像图片',
       avatarTitle: '上传项目头像',
       avatarReady: '头像已加入部署信息',
-      avatarHint: '支持 PNG、JPEG、SVG、GIF、WebP，建议小于 1MB，会自动压缩后写入 metadata',
+      avatarHint: '支持 PNG、JPEG、SVG、GIF、WebP，建议小于 1MB，会自动压缩后写入元数据',
       avatarChange: '更换',
       avatarRemove: '移除',
       avatarInvalid: '请选择 PNG、JPEG、SVG、GIF 或 WebP 图片。',
@@ -323,15 +323,15 @@ const copy = {
       section02: '02 模板',
       templateTitle: '选择合约模板',
       section03: '03 铸造参数',
-      mintTitle: 'Mint 价格与供应',
+      mintTitle: '铸造价格与供应',
       supply: '发行总量',
       mintCount: '总铸造次数',
       publicMintCount: '公开份数',
       whitelistMintCount: '白名单份数',
-      maxMintPerWallet: '单钱包最多 Mint',
+      maxMintPerWallet: '单钱包最多铸造',
       mintPrice: '单次价格',
-      whitelistTitle: '开启白名单 Mint',
-      whitelistDesc: '开启后，只有项目方加入白名单列表的钱包可以 mint。',
+      whitelistTitle: '开启白名单铸造',
+      whitelistDesc: '开启后，只有项目方加入白名单列表的钱包可以铸造。',
       section04: '04 税收分配',
       taxTitle: '买卖税与四项分配',
       total: (value: number) => `总计 ${value}%`,
@@ -429,24 +429,24 @@ const copy = {
       swapConfirmed: 'Swap transaction confirmed.',
     },
     home: {
-      eyebrow: `${appName} Launch Protocol`,
-      title: 'Institutional-grade token launches on BNB Chain',
+      eyebrow: `${appName}`,
+      title: 'BNB Chain 一键发币',
       subtitle:
-        'Deploy ERC20 tokens with whitelist mint vaults, automated buyback burn, and holder dividend mechanics. Every launch is governed by auditable on-chain smart contracts.',
-      launch: 'Deploy token',
-      openCommunity: 'Mission control',
-      consoleAria: 'Rocket launch flow',
+        '部署带有白名单铸造金库、自动回购销毁与持币分红机制的 ERC20 代币。每次发射都由可审计的链上智能合约治理。',
+      launch: '立即发币',
+      openCommunity: '加入社区',
+      consoleAria: '发币流程',
       consoleStats: [
-        ['Ticker', appSymbol, '1,000,000'],
-        ['Mints', '300', '0.01 BNB'],
-        ['Tax', '3 / 3', '70 burn / 30 DOGE rewards'],
-        ['Mode', 'Whitelist', 'Auto buyback'],
+        ['代币', appSymbol, '1,000,000'],
+        ['铸造', '300', '0.01 BNB'],
+        ['税费', '3 / 3', '70 销毁 / 30 DOGE 分红'],
+        ['模式', '白名单', '自动回购'],
       ],
-      consoleFlow: ['Wallet', 'Factory', 'Token + Vault'],
+      consoleFlow: ['钱包', '工厂', '代币 + 金库'],
       features: [
-        ['01 Issuance', '0.005 BNB deployment fee', 'Submit a real on-chain deployment transaction through the verified Factory contract. Confirmed projects are recorded in the launch registry.'],
-        ['02 Whitelist mint', 'Independent Token + Vault', 'Each project deploys its own ERC20 and mint vault. Whitelisted wallets mint during the private phase before public mint opens.'],
-        ['03 Auto buyback', '70% burn + 30% DOGE dividends', 'Tax flow accumulates BNB, processes 10% per 60-second cycle with no BNB floor, then routes the auto pool to buyback burn and DOGE holder rewards.'],
+        ['01 发行', '0.005 BNB 部署费', '通过已验证的 Factory 合约提交真实链上部署交易，确认后项目自动进入发射列表。'],
+        ['02 白名单铸造', '独立代币 + 金库', '每个项目部署独立的 ERC20 与铸造金库，白名单钱包在公开铸造前优先铸造。'],
+        ['03 自动回购', '70% 销毁 + 30% DOGE 分红', '交易税自动累积 BNB，每 60 秒处理一次可用 BNB 的 10% 且无最低门槛，自动流入回购销毁与 DOGE 持币分红。'],
       ],
     },
     projects: {
@@ -474,7 +474,7 @@ const copy = {
       detail: 'Mechanism',
       trade: 'Trade',
       website: 'Website',
-      fallbackDescription: `${appName} Rocket launch project`,
+      fallbackDescription: `${appName} launch project`,
       quota: (whitelistMinted: string, whitelistTotal: string, publicMinted: string, publicTotal: string) =>
         `Whitelist ${whitelistMinted}/${whitelistTotal} | Public ${publicMinted}/${publicTotal}`,
       whitelistManage: 'Add whitelist',
@@ -515,7 +515,7 @@ const copy = {
       sellTax: 'Sell tax',
       marketing: 'Treasury allocation',
       liquidity: 'Liquidity allocation',
-      rewards: 'Holder dividends',
+      rewards: '持币分红',
       burn: 'Buyback burn',
       rewardThreshold: 'Reward threshold',
       receiver: 'Receiver wallet',
@@ -604,8 +604,8 @@ const copy = {
       liquidityTokenHint: '50% matches the mint price. Below 50% opens lower; above 50% opens higher. The contract calculates LP token reserve automatically.',
       whitelistTitle: 'Whitelist mint gate',
       whitelistDesc: 'Listed wallets mint first from the Vault. Public mint opens after the whitelist allocation is filled or manually released.',
-      section04: '04 Taxes and dividends',
-      taxTitle: 'Taxes, buyback burn, and dividends',
+      section04: '04 税收分配',
+      taxTitle: '买卖税与四项分配',
       total: (value: number) => `Total ${value}%`,
       buyTax: 'Buy tax',
       sellTax: 'Sell tax',
@@ -670,32 +670,32 @@ const templateTranslations: Record<Language, Partial<Record<TemplateId, Partial<
   },
   en: {
     standard: {
-      name: 'Standard Mint',
-      tag: 'Core',
-      summary: 'Deploy an independent ERC20 and Vault. Users mint by quantity, suitable for fast community asset launches.',
-      bestFor: 'Community launches, event passes, lightweight asset issuance',
-      checks: ['Fixed supply', 'Public mint count', 'Independent Vault', 'Creator receiver wallet'],
+      name: '标准发射',
+      tag: '基础',
+      summary: '部署独立的 ERC20 代币与 Mint 金库，用户按份数铸造，适合快速社区资产发射。',
+      bestFor: '社区发射、活动通行证、轻量级资产发行',
+      checks: ['固定总量', '公开铸造份数', '独立金库', '创建者接收钱包'],
     },
     time: {
-      name: 'Timed Launch',
-      tag: 'Time',
-      summary: 'Supports warm-up, queueing, batch openings, whitelist windows, and launch timing parameters.',
-      bestFor: 'Warm-up campaigns, queued launches, staged openings',
-      checks: ['Opening time', 'Cooldown window', 'Progress tracking', 'Public parameters'],
+      name: '分批开放',
+      tag: '时间',
+      summary: '支持预热、排队、分批开放、白名单窗口与发射时间参数控制。',
+      bestFor: '预热活动、排队发射、分阶段开放',
+      checks: ['开盘时间', '冷却窗口', '进度追踪', '公开参数'],
     },
     buyback: {
-      name: 'Auto Buyback',
+      name: '回流核心',
       tag: '70/30',
-      summary: 'Displays the visible tax flow as 70% buyback burn and 30% DOGE holder dividends.',
-      bestFor: 'Whitelist launches, auto buyback tokens, holder reward communities',
-      checks: ['70% buyback burn', '30% DOGE dividends', 'Whitelist vault'],
+      summary: '对外展示 70% 回购销毁 + 30% DOGE 持币分红的税收流向。',
+      bestFor: '白名单发射、自动回购代币、持币奖励社区',
+      checks: ['70% 回购销毁', '30% DOGE 分红', '白名单金库'],
     },
     nftReward: {
-      name: 'Reward Vault',
-      tag: 'Reward',
-      summary: 'Records reward token and holding threshold, ready for NFT, task, or membership rewards later.',
-      bestFor: 'Task communities, holder rewards, gamified launches',
-      checks: ['Reward token', 'Threshold record', 'Template ID', 'Future upgrades'],
+      name: '持币分红',
+      tag: '分红',
+      summary: '记录分红代币与持仓门槛，后续可扩展为 NFT、任务或会员奖励。',
+      bestFor: '任务社区、持币奖励、游戏化发射',
+      checks: ['分红代币', '门槛记录', '模板 ID', '后续升级'],
     },
   },
 }
@@ -708,20 +708,20 @@ const allocationTranslations: Record<Language, Record<AllocationKey, { label: st
     burn: { label: '销毁', hint: '减少供应' },
   },
   en: {
-    marketing: { label: 'Marketing', hint: '20% route' },
-    liquidity: { label: 'Liquidity', hint: 'LP route' },
-    rewards: { label: 'Holder dividends', hint: '30% DOGE side' },
-    burn: { label: 'Buyback burn', hint: '70% burn side' },
+    marketing: { label: '营销', hint: '20% 路由' },
+    liquidity: { label: '回流', hint: 'LP 路由' },
+    rewards: { label: '持币分红', hint: '30% DOGE 侧' },
+    burn: { label: '回购销毁', hint: '70% 销毁侧' },
   },
 }
 
 const paymentTokenNotes: Record<Language, Record<string, string>> = {
   zh: {
-    BNB: '原生 BNB mint',
+    BNB: '原生 BNB 铸造',
     USDT: 'BSC USDT',
   },
   en: {
-    BNB: 'Native BNB mint',
+    BNB: '原生 BNB 铸造',
     USDT: 'BSC USDT',
   },
 }
@@ -738,7 +738,7 @@ const initialAdvancedTax: AdvancedTaxState = {
 function App() {
   const [page, setPage] = useState<PageKey>(() => readPageFromHash())
   const [menuOpen, setMenuOpen] = useState(false)
-  const [language] = useState<Language>('en')
+  const [language] = useState<Language>('zh')
   const [wallet, setWallet] = useState<WalletState>({
     account: '',
     chainId: '',
@@ -747,7 +747,7 @@ function App() {
   })
   const [form, setForm] = useState<FormState>(() => ({
     ...initialForm,
-    description: defaultDescriptions.en,
+    description: defaultDescriptions.zh,
   }))
   const [templateId, setTemplateId] = useState<TemplateId>('buyback')
   const [allocation, setAllocation] = useState<AllocationState>(initialAllocation)
@@ -777,9 +777,9 @@ function App() {
   }, [])
 
   useEffect(() => {
-    document.documentElement.lang = 'en'
-    document.documentElement.dataset.rocketBuild = appBuildId
-    localStorage.setItem('rocket-launch-language', 'en')
+    document.documentElement.lang = 'zh'
+    document.documentElement.dataset.panguBuild = appBuildId
+    localStorage.setItem('pangu-launch-language', 'zh')
   }, [language])
 
   useEffect(() => {
@@ -1466,16 +1466,16 @@ function Header({
         aria-label={appName}
       >
         <span className="brand-mark">
-          <img src="/rocket-logo.jpg" alt="" />
+          <img src="/pangu-logo.jpg" alt="" />
         </span>
         <span>
           <strong>{appName}</strong>
           <small>
             {activePage === 'launch'
-              ? 'Mint'
+              ? '铸造'
               : activePage === 'community'
-                ? 'Club'
-                : 'Launch'}
+                ? '社区'
+                : '发射'}
           </small>
         </span>
       </a>
@@ -1617,47 +1617,33 @@ function HomePage({
               {text.home.openCommunity}
             </button>
           </div>
-          <div className="deck-metrics" aria-label="Rocket tokenomics">
+          <div className="deck-metrics" aria-label="发射台参数">
             <span>
               <b>70%</b>
-              Buyback burn
+              回购销毁
             </span>
             <span>
               <b>30%</b>
-              Holder rewards
+              持币分红
             </span>
             <span>
               <b>10%</b>
-              Cycle size
+              单次循环
             </span>
             <span>
-              <b>60s</b>
-              Buyback cycle
+              <b>60秒</b>
+              回购周期
             </span>
             <span>
-              <b>No</b>
-              BNB floor
+              <b>无</b>
+              BNB 底池
             </span>
-          </div>
-        </div>
-
-        <div className="deck-stage" aria-label={text.home.consoleAria}>
-          <div className="orbit-radar">
-            <span className="radar-ring ring-a" />
-            <span className="radar-ring ring-b" />
-            <span className="radar-ring ring-c" />
-            <img src="/rocket-logo.jpg" alt="" />
-          </div>
-          <div className="stage-caption">
-            <span>Protocol status</span>
-            <strong>Auto buyback active</strong>
-            <em>Whitelist mint open</em>
           </div>
         </div>
 
         <aside className="deck-panel">
           <div className="console-head">
-            <span>{appSymbol} Launch Protocol</span>
+            <span>{appSymbol} 发射协议</span>
             <strong>0.005 BNB</strong>
           </div>
           <div className="console-grid">
@@ -1692,22 +1678,22 @@ function HomePage({
       <section className="project-board radar-board">
         <div className="board-header">
           <div>
-            <p>Launch registry</p>
-            <h2>Live token launches</h2>
-            <span>Filter minting, whitelist, and completed launches from the on-chain factory registry.</span>
+            <p>链上实时数据</p>
+            <h2>发射广场</h2>
+            <span>所有项目直接来自 Factory 智能合约，实时展示铸造、开盘和完成状态。</span>
           </div>
           <div className="board-stats">
             <span>
               <b>{projects.length}</b>
-              Total
+              全部
             </span>
             <span>
               <b>{activeProjects}</b>
-              Active
+              铸造中
             </span>
             <span>
               <b>{whitelistProjects}</b>
-              Whitelist
+              白名单
             </span>
           </div>
         </div>
@@ -1735,9 +1721,9 @@ function HomePage({
               ))}
             </div>
             <div className="radar-signal">
-              <span>Factory</span>
-              <strong>{isLaunchpadConfigured ? 'Online' : 'Offline'}</strong>
-              <em>{isLaunchpadConfigured ? shortAddress(launchpadConfig.factoryAddress) : 'Not configured'}</em>
+              <span>工厂合约</span>
+              <strong>{isLaunchpadConfigured ? '在线' : '离线'}</strong>
+              <em>{isLaunchpadConfigured ? shortAddress(launchpadConfig.factoryAddress) : '未配置'}</em>
             </div>
           </aside>
 
@@ -2583,13 +2569,13 @@ function LaunchPage({
         claimWait: '分红间隔(秒)',
       }
     : {
-        title: 'Advanced taxes',
-        transferTax: 'Transfer tax',
-        addLiquidityTax: 'Add LP tax',
-        removeLiquidityTax: 'Remove LP tax',
-        launchProtectionTax: 'Launch guard tax',
-        launchProtectionBlocks: 'Guard blocks',
-        claimWait: 'Claim wait (sec)',
+        title: '高级税收',
+        transferTax: '转账税',
+        addLiquidityTax: '加池税',
+        removeLiquidityTax: '撤池税',
+        launchProtectionTax: '开盘保护税',
+        launchProtectionBlocks: '保护区块',
+        claimWait: '分红间隔(秒)',
       }
   const [avatarError, setAvatarError] = useState('')
 
@@ -2639,7 +2625,7 @@ function LaunchPage({
       </section>
 
       <form className="launch-grid launch-workbench" onSubmit={onSubmit}>
-        <aside className="launch-steps" aria-label="Launch sequence">
+        <aside className="launch-steps" aria-label="发射流程">
           <div>
             <span>01</span>
             <strong>{text.launch.section01.replace(/^01\s*/, '')}</strong>
@@ -2925,22 +2911,22 @@ function LaunchPage({
                 <TaxRing allocation={allocation} language={language} totalLabel={text.launch.totalAllocation} />
                 <div className="fixed-tokenomics">
                   <div>
-                    <span>Auto buyback burn</span>
+                    <span>自动回购销毁</span>
                     <strong>70%</strong>
-                    <em>BNB buys back ROCKET and sends tokens to the dead address.</em>
+                    <em>BNB 回购代币并发送到黑洞地址。</em>
                   </div>
                   <div>
-                    <span>Holder dividends</span>
+                    <span>持币分红</span>
                     <strong>30%</strong>
-                    <em>BNB routes into DOGE buys and deposits to the dividend pool.</em>
+                    <em>BNB 买入 DOGE 并注入分红池。</em>
                   </div>
                   <div>
-                    <span>Auto cycle</span>
-                    <strong>10% / 60s</strong>
-                    <em>Each cycle processes 10% of available pending BNB with no minimum BNB floor.</em>
+                    <span>自动循环</span>
+                    <strong>10% / 60秒</strong>
+                    <em>每轮处理可用待处理 BNB 的 10%，无最低 BNB 门槛。</em>
                   </div>
                   <p className={allocationTotal > 100 ? 'tax-warning' : 'tax-note'}>
-                    Fixed project route: 70% buyback burn, 30% DOGE holder rewards, 0% LP route.
+                    固定项目路由：70% 回购销毁，30% DOGE 持币分红，0% LP 路由。
                   </p>
                 </div>
               </div>
@@ -3025,26 +3011,26 @@ function LaunchPage({
 
         <aside className="launch-side mission-preview">
           <div className="side-orbit">
-            <img src="/rocket-logo.jpg" alt="" />
-            <strong>ROCKET</strong>
+            <img src="/pangu-logo.jpg" alt="" />
+            <strong>{appSymbol}</strong>
             <span>{text.launch.mode}</span>
           </div>
           <div className="side-card launch-telemetry">
-            <p>Mission telemetry</p>
+            <p>任务遥测</p>
             <div>
-              <span>Auto buyback</span>
+              <span>自动回购</span>
               <strong>10%</strong>
-              <em>Every 60s with no BNB floor</em>
+              <em>每 60 秒执行，无 BNB 门槛</em>
             </div>
             <div>
-              <span>Burn route</span>
+              <span>销毁路由</span>
               <strong>70%</strong>
-              <em>BNB to dead address</em>
+              <em>BNB 进入黑洞地址</em>
             </div>
             <div>
-              <span>Reward route</span>
+              <span>分红路由</span>
               <strong>30%</strong>
-              <em>Holder dividend pool</em>
+              <em>进入持币分红池</em>
             </div>
           </div>
           <div className="side-card">
@@ -3370,11 +3356,11 @@ function CommunityPage({
     <main className="page community-page">
       <section className="community-hero">
         <div>
-          <p>{isZh ? 'PEPE 社区入口' : 'Rocket Mission Control'}</p>
-          <h1>{isZh ? '一起发新币、看项目、接上链上记录' : 'Launch, track, and trade from one command deck'}</h1>
+          <p>{isZh ? '社区与数据' : 'Community & Data'}</p>
+          <h1>{isZh ? '加入社区，掌握每一枚新币的发射节奏' : 'Launch, track, and trade from one command deck'}</h1>
           <span>
             {isZh
-              ? 'QQ群用于同步发射台更新、部署问题、Mint 记录和开盘提醒。页面功能仍然全部连接真实钱包和 BSC 链上合约。'
+              ? '获取发币台更新、部署技巧、Mint 提醒和开盘通知。所有功能均直连真实钱包与 BSC 链上合约。'
               : 'Track whitelist launches, deployment status, mint records, buyback mechanics, and market-open activity while staying connected to real BSC contracts.'}
           </span>
           <div className="community-actions">
@@ -3384,7 +3370,7 @@ function CommunityPage({
               onClick={() => window.open(normalizeExternalUrl(import.meta.env.VITE_TELEGRAM_URL) || 'https://telegram.org/', '_blank', 'noreferrer')}
             >
               <Send size={18} />
-              Open Telegram
+              打开 Telegram
             </button>
             <button className="ghost-button" type="button" onClick={() => navigate('launch')}>
               <Rocket size={18} />
@@ -3392,9 +3378,9 @@ function CommunityPage({
             </button>
           </div>
         </div>
-        <div className="community-badge" aria-label="Rocket community badge">
-          <strong>ROCKET</strong>
-          <span>70 burn | 30 DOGE rewards | BSC</span>
+        <div className="community-badge" aria-label="社区徽章">
+          <strong>{appSymbol}</strong>
+          <span>70% 销毁 | 30% DOGE 分红 | BSC</span>
         </div>
       </section>
 

@@ -26,6 +26,9 @@ const configuredVanitySuffix = String(import.meta.env.VITE_VANITY_SUFFIX ?? '')
 const DEFAULT_APP_BACKEND_URL = 'https://xueshutools.cn/apple-api'
 const configuredBackendUrl =
   String(import.meta.env.VITE_APP_BACKEND_URL ?? '').trim() || DEFAULT_APP_BACKEND_URL
+const configuredFactoryAddress = String(
+  import.meta.env.VITE_FACTORY_CONTRACT ?? import.meta.env.VITE_LAUNCHPAD_FACTORY_ADDRESS ?? '',
+).trim()
 
 export const DEFAULT_LAUNCHPAD_FACTORY_ADDRESS = '0x4dFF682688c0b81c2F90D99C5E47A5Aa2f51B503'
 export const DEFAULT_AUDIT_REGISTRY_ADDRESS = ''
@@ -42,7 +45,9 @@ const DEFAULT_HIDDEN_PROJECT_TOKENS = [
 
 export const launchpadConfig = {
   chainId: Number(import.meta.env.VITE_LAUNCHPAD_CHAIN_ID ?? 56),
-  factoryAddress: DEFAULT_LAUNCHPAD_FACTORY_ADDRESS,
+  factoryAddress: isAddress(configuredFactoryAddress)
+    ? configuredFactoryAddress
+    : DEFAULT_LAUNCHPAD_FACTORY_ADDRESS,
   creationFeeWei: String(import.meta.env.VITE_LAUNCHPAD_CREATION_FEE_WEI ?? DEFAULT_CREATION_FEE_WEI),
   hiddenProjectTokens: String(import.meta.env.VITE_HIDDEN_PROJECT_TOKENS ?? ''),
   backendUrl: normalizeBackendBaseUrl(configuredBackendUrl),

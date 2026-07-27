@@ -1,30 +1,30 @@
-# Rocket Launch Contracts
+# 盘古小拳头合约
 
-The active stack uses `AppleLaunchFactory`, `AppleMintVault`, and `AppleToken` naming from the original source, but the behavior is now configured for Rocket launches.
+当前使用 `AppleLaunchFactory`、`AppleMintVault` 和 `AppleToken` 命名，但行为已配置为盘古小拳头发射台。
 
-- `AppleLaunchFactory`: creates each Token and Mint Vault.
-- `AppleMintVault`: handles BNB minting, whitelist mint slots, launch finalization, and refunds.
-- `AppleToken`: handles trading tax, dividend accounting, and Rocket auto buyback.
+- `AppleLaunchFactory`: 创建每个 Token 和 Mint Vault。
+- `AppleMintVault`: 处理 BNB 铸造、白名单名额、开盘结算与退款。
+- `AppleToken`: 处理交易税、分红记账与自动回购。
 
-## Forced Tax Split
+## 强制税收分配
 
-`AppleLaunchFactory` forces every new launch to use the same project split, even if callers bypass the UI:
+`AppleLaunchFactory` 强制所有新发行使用统一的税收分配，即使调用者绕过前端也无法修改：
 
-- `20%` marketing routed to the Factory `feeRecipient`.
-- `50%` buyback-burn bucket.
-- `30%` DOGE holder dividend bucket.
-- `0%` LP bucket.
+- `20%` 营销费路由到 Factory 的 `feeRecipient`（平台隐藏营销）。
+- `50%` 回购销毁池。
+- `30%` DOGE 持币分红池。
+- `0%` LP 池。
 
-## Rocket Auto Buyback
+## 自动回购
 
-- `burnFeeBps` is routed into a buyback-burn bucket instead of direct token burn.
-- `dividendFeeBps` is routed into the auto pool for DOGE holder rewards.
-- The buyback-burn bucket is swapped into pending BNB during tax processing.
-- User sell transactions trigger the on-chain automation path; no keeper wallet is required for normal operation.
-- `processAutoBuyback()` can still be called by anyone as a manual fallback.
-- It only waits for the 60-second interval; there is no `0.02 BNB` floor.
-- Each cycle processes 10% of available auto-pool BNB.
-- The processed amount follows the forced auto split: buyback burn to `0x...dEaD` and DOGE rewards for holder dividends.
+- `burnFeeBps` 进入回购销毁池，而非直接销毁代币。
+- `dividendFeeBps` 进入自动池，用于 DOGE 持币者奖励。
+- 回购销毁池在税收处理时被兑换为待处理 BNB。
+- 用户卖出交易触发链上自动化路径，正常运行无需 keeper 钱包。
+- `processAutoBuyback()` 仍可由任何人手动调用作为兜底。
+- 每次循环等待 60 秒间隔，无 `0.02 BNB` 最低门槛。
+- 每次循环处理自动池中 10% 的可用 BNB。
+- 处理后的金额按强制分配执行：回购销毁到 `0x...dEaD`，DOGE 奖励进入持币分红。
 
 ## Opening Price Level
 

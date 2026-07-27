@@ -43,7 +43,7 @@ const factorySource =
   "";
 
 if (!isAddress(factorySource)) {
-  throw new Error("Missing PEPE_FACTORY_ADDRESS or VITE_FACTORY_CONTRACT for PEPE backend.");
+  throw new Error("Missing Pangu factory address. Set PEPE_FACTORY_ADDRESS or VITE_FACTORY_CONTRACT.");
 }
 
 const chainId = Number(process.env.PEPE_CHAIN_ID || process.env.APPLE_CHAIN_ID || process.env.VITE_CHAIN_ID || 56);
@@ -51,7 +51,7 @@ const rpcUrl = process.env.PEPE_RPC_URL || process.env.APPLE_RPC_URL || process.
 const factoryAddress = getAddress(factorySource);
 const provider = new JsonRpcProvider(rpcUrl, chainId);
 const factory = new Contract(factoryAddress, factoryArtifact.abi, provider);
-const port = Number(process.env.PEPE_BACKEND_PORT || process.env.APPLE_BACKEND_PORT || 8787);
+const port = Number(process.env.PORT || process.env.PEPE_BACKEND_PORT || process.env.APPLE_BACKEND_PORT || 8787);
 const backendToken = process.env.PEPE_BACKEND_TOKEN || process.env.APPLE_BACKEND_TOKEN || "";
 const autoVerify = process.env.AUTO_VERIFY_PROJECTS !== "false";
 const autoProcess = process.env.AUTO_PROCESS_PROJECTS === "true";
@@ -162,8 +162,8 @@ const server = createServer(async (request, response) => {
   }
 });
 
-server.listen(port, () => {
-  console.log(`PEPE backend listening on :${port}`);
+server.listen(port, "0.0.0.0", () => {
+  console.log(`Pangu backend listening on :${port}`);
   console.log(`Factory: ${factoryAddress}`);
   console.log(`RPC: ${rpcUrl}`);
   if (autoVerify) {

@@ -1,5 +1,5 @@
 {
-  "name": "rocket-launchpad-bsc",
+  "name": "pangu-launchpad-bsc",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -16,7 +16,7 @@
     "verify:factory:testnet": "npm run patch:hardhat-verify && hardhat verify --network bscTestnet",
     "verify:project:bsc": "node scripts/verify-project.cjs",
     "contracts:verify:project": "npm run patch:hardhat-verify && npm run verify:project:bsc",
-    "deploy:cloudflare": "npm run build && npx wrangler pages deploy dist --project-name rocket-launchpad"
+    "deploy:cloudflare": "npm run build && npx wrangler pages deploy dist --project-name pangu-launchpad"
   },
   "dependencies": {
     "@noble/hashes": "^2.2.0",
@@ -35,17 +35,17 @@
     "solc": "^0.8.28",
     "vite": "^5.4.11"
   },
-  "description": "Rocket Launchpad is a BNB Smart Chain mint launchpad built with Vite, React, and Hardhat.",
+  "description": "盘古小拳头发射台是一个基于 BNB Smart Chain 的 Mint 发射平台，使用 Vite、React 和 Hardhat 构建。",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ybc112/Rocket.git"
+    "url": "git+https://github.com/ybc112/pangu.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ybc112/Rocket/issues"
+    "url": "https://github.com/ybc112/pangu/issues"
   },
-  "homepage": "https://github.com/ybc112/Rocket#readme"
+  "homepage": "https://github.com/ybc112/pangu#readme"
 }
