@@ -26,6 +26,12 @@
 - 每次循环处理自动池中 10% 的可用 BNB。
 - 处理后的金额按强制分配执行：回购销毁到 `0x...dEaD`，DOGE 奖励进入持币分红。
 
+## 未打满退款
+
+- Mint 开放 24 小时，打满后自动开盘。
+- 24 小时未打满时，参与者可退回收到的 Token，并取回对应付款。
+- 项目方不能强制把未打满项目开盘，退款权不会被管理操作抢先关闭。
+
 ## Opening Price Level
 
 `AppleMintVault` treats the launch slider as an opening-price level, not a literal LP-token percentage.

@@ -75,6 +75,7 @@ async function main() {
   if (!deployer) throw new Error('No deployer account available.');
 
   const feeRecipient = readAddress('FACTORY_FEE_RECEIVER', process.env.FEE_RECIPIENT || DEFAULT_FEE_RECIPIENT);
+  const factoryOwner = readAddress('FACTORY_OWNER', deployer.address);
   const liquidityRouter = readAddress('PANCAKE_ROUTER', process.env.PANCAKE_V2_ROUTER_ADDRESS || DEFAULT_PANCAKE_ROUTER);
   const creationFeeBnb = process.env.FACTORY_CREATION_FEE_BNB || process.env.CREATION_FEE_BNB || '0.005';
   const creationFee = hre.ethers.parseEther(creationFeeBnb);
@@ -82,6 +83,7 @@ async function main() {
 
   console.log(`Network: ${hre.network.name}`);
   console.log(`Deployer: ${deployer.address}`);
+  console.log(`Factory owner: ${factoryOwner}`);
   console.log(`Fee recipient: ${feeRecipient}`);
   console.log(`Liquidity router: ${liquidityRouter}`);
   console.log(`Creation fee: ${creationFeeBnb} BNB (${creationFee.toString()} wei)`);
@@ -128,6 +130,11 @@ async function main() {
   await (await vaultDeployer.setFactory(factoryAddress)).wait();
   console.log('Deployers bound to factory.');
 
+  if (factoryOwner.toLowerCase() !== deployer.address.toLowerCase()) {
+    await (await factory.transferOwnership(factoryOwner)).wait();
+    console.log(`Factory ownership transferred: ${factoryOwner}`);
+  }
+
   const constructorArguments = [
     feeRecipient,
     creationFee.toString(),
@@ -155,6 +162,7 @@ async function main() {
     tokenDeployerDeploymentTx: tokenDeployerTx?.hash || '',
     vaultDeployerDeploymentTx: vaultDeployerTx?.hash || '',
     deployer: deployer.address,
+    owner: factoryOwner,
     constructorArguments,
     deployedAt: new Date().toISOString(),
     verifyCommand: `npx hardhat verify --network ${hre.network.name} ${factoryAddress} ${constructorArguments.join(' ')}`,

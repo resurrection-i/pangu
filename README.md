@@ -40,3 +40,12 @@ npm run dev
    - 可选构建环境变量：`VITE_FACTORY_CONTRACT`、`VITE_LAUNCHPAD_CHAIN_ID`、`VITE_LAUNCHPAD_CREATION_FEE_WEI`、`VITE_VANITY_SUFFIX`
 
 后端头像文件默认写入本地目录。Render 实例重启或重新部署时，本地文件可能丢失；生产环境请挂载 Persistent Disk，并将 `PEPE_ASSET_DIR` 指向挂载目录，或改用对象存储。
+
+## BSC 主网部署
+
+- Factory: `0xcBbF9b3fbE506c3Fa6Ced4e3915fb6ed6af92C5B`
+- AppleTokenDeployer: `0xAEb8B096a717AeF05F169707968623C2c9F97650`
+- AppleMintVaultDeployer: `0x074071aD719BEBB3bAe65dE95dDB25A149b91846`
+- 创建费：`0.005 BNB`
+- Token 地址后缀：`8888`
+- 未打满退款窗口：`24 小时`

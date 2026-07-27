@@ -264,23 +264,10 @@ contract AppleMintVault is Ownable, ReentrancyGuard {
     }
 
     function forceFinalizeLaunch() external onlyOwner nonReentrant {
-        if (finalized) {
-            revert LaunchAlreadyFinalized();
-        }
-        if (block.timestamp < refundDeadline || mintedCount == totalMints) {
-            revert ForceFinalizeUnavailable();
-        }
-        if (mintedCount == 0 || refundedCount > 0 || liquidityPair == address(0)) {
-            revert ForceFinalizeUnavailable();
-        }
-
-        uint256 lockedLp = IERC20(liquidityPair).balanceOf(address(this));
-        if (lockedLp == 0) {
-            revert ForceFinalizeUnavailable();
-        }
-
-        _finalizeLaunch();
-        emit ForceFinalized(msg.sender, mintedCount, lockedLp);
+        // An undersubscribed launch must remain refundable after the deadline.
+        // Keep the function selector for backwards-compatible tooling, but
+        // permanently disable the former partial-launch override.
+        revert ForceFinalizeUnavailable();
     }
 
     function _refundAccount(address account, address recipient, bool emergency) private {
