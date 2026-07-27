@@ -2466,6 +2466,16 @@ input[type="range"]::-moz-range-thumb {
   text-align: center;
 }
 
+.side-orbit > img {
+  width: 180px;
+  max-width: 100%;
+  height: 180px;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  border-radius: 24px;
+  object-fit: cover;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.36);
+}
+
 .side-orbit strong {
   color: var(--accent);
   font-size: 48px;
@@ -3599,6 +3609,11 @@ input[type="range"]::-moz-range-thumb {
   .avatar-preview {
     width: 68px;
     height: 68px;
+  }
+
+  .side-orbit > img {
+    width: 140px;
+    height: 140px;
   }
 
   .link-icon {
