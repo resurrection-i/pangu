@@ -3479,10 +3479,19 @@ function readTextBytes(value: string) {
 
 function ProjectAvatar({ project, size = 'card' }: { project: LaunchProject; size?: 'card' | 'detail' }) {
   const fallback = project.symbol.slice(0, 1).toUpperCase() || '?'
+  const [imageFailed, setImageFailed] = useState(false)
+
+  useEffect(() => {
+    setImageFailed(false)
+  }, [project.avatar])
 
   return (
     <span className={`project-avatar ${size}`}>
-      {project.avatar ? <img src={project.avatar} alt="" loading="lazy" /> : fallback}
+      {project.avatar && !imageFailed ? (
+        <img src={project.avatar} alt="" loading="lazy" onError={() => setImageFailed(true)} />
+      ) : (
+        fallback
+      )}
     </span>
   )
 }
