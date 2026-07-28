@@ -8,7 +8,11 @@ export const BNB_CHAIN = {
     symbol: 'BNB',
     decimals: 18,
   },
-  rpcUrls: ['https://bsc.publicnode.com'],
+  rpcUrls: [
+    'https://bsc-dataseed.binance.org',
+    'https://bsc-rpc.publicnode.com',
+    'https://bsc-dataseed1.defibit.io',
+  ],
   blockExplorerUrls: ['https://bscscan.com'],
 }
 

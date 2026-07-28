@@ -9,6 +9,8 @@
 - 默认税收分配：70% 自动回购销毁 + 30% 持币分红。
 - 每 60 秒自动处理一次回购，每次处理可用 BNB 的 10%，无最低 BNB 门槛。
 - 新 Token 部署后，交易税自动流入回购销毁与持币分红池。
+- 内置 PancakeSwap V2 买卖页，并保留跳转 PancakeSwap 的备用入口。
+- 默认社区入口：Telegram `https://t.me/panguxqt`、X `https://x.com/PANGUXQT`。
 
 ## Commands
 
@@ -36,8 +38,8 @@ npm run dev
    - Build Command: `npm ci && npm run build`
    - Publish Directory: `dist`
    - Rewrite: `/*` 到 `/index.html`
-   - 必填构建环境变量：`VITE_APP_BACKEND_URL=https://你的后端服务.onrender.com`
-   - 可选构建环境变量：`VITE_FACTORY_CONTRACT`、`VITE_LAUNCHPAD_CHAIN_ID`、`VITE_LAUNCHPAD_CREATION_FEE_WEI`、`VITE_VANITY_SUFFIX`
+   - 当前盘古部署无需填写环境变量，代码已内置线上 Factory、后端、`8888` 尾号、Telegram 和 X 默认值。
+   - 如需覆盖默认值，可设置：`VITE_APP_BACKEND_URL`、`VITE_FACTORY_CONTRACT`、`VITE_LAUNCHPAD_CHAIN_ID`、`VITE_LAUNCHPAD_CREATION_FEE_WEI`、`VITE_VANITY_SUFFIX`、`VITE_TELEGRAM_URL`、`VITE_X_URL`
 
 后端头像文件默认写入本地目录。Render 实例重启或重新部署时，本地文件可能丢失；生产环境请挂载 Persistent Disk，并将 `PEPE_ASSET_DIR` 指向挂载目录，或改用对象存储。
 

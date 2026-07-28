@@ -92,7 +92,7 @@ export async function fetchPancakeSwapQuote({
   const text = messages[locale]
   const normalizedToken = normalizeTokenAddress(tokenAddress, locale)
   const normalizedSlippage = normalizeSlippage(slippageBps, locale)
-  const provider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], 56)
+  const provider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], 56, { staticNetwork: true })
   const router = new Contract(PANCAKE_V2_ROUTER_ADDRESS, routerAbi, provider)
   const token = new Contract(normalizedToken, erc20Abi, provider)
   const [tokenSymbol, tokenDecimals] = await Promise.all([

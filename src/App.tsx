@@ -52,7 +52,14 @@ import {
   watchLaunchProjectEvents,
 } from './contracts/launchpad'
 import {
+  PANCAKE_V2_ROUTER_ADDRESS,
+  approvePancakeSwapToken,
   buildPancakeSwapUrl,
+  executePancakeSwap,
+  fetchPancakeSwapQuote,
+  type PancakeSwapDirection,
+  type PancakeSwapQuote,
+  type PancakeSwapRequest,
 } from './contracts/pancake'
 import type {
   AllocationKey,
@@ -77,11 +84,13 @@ import {
   targetChainId,
 } from './wallet'
 
-const pages: PageKey[] = ['home', 'launch', 'community', 'verify', 'detail']
-const appBuildId = 'pangu-20260727-launchpad'
+const pages: PageKey[] = ['home', 'launch', 'community', 'verify', 'swap', 'detail']
+const appBuildId = 'pangu-20260729-swap-social'
 const appName = String(import.meta.env.VITE_APP_NAME ?? '盘古小拳头发射台')
 const appSymbol = String(import.meta.env.VITE_APP_SYMBOL ?? 'PANGU')
 const factoryExplorerUrl = `${BNB_CHAIN.blockExplorerUrls[0]}/address/${launchpadConfig.factoryAddress}#code`
+const panguTelegramUrl = normalizeExternalUrl(import.meta.env.VITE_TELEGRAM_URL) || 'https://t.me/panguxqt'
+const panguXUrl = normalizeExternalUrl(import.meta.env.VITE_X_URL) || 'https://x.com/PANGUXQT'
 
 type Language = 'zh' | 'en'
 
@@ -835,7 +844,7 @@ function App() {
     }
 
     const stopWatching = watchLaunchProjectEvents(projects, refreshProjects)
-    const fallbackTimer = window.setInterval(refreshProjects, 15_000)
+    const fallbackTimer = window.setInterval(refreshProjects, 30_000)
 
     return () => {
       stopWatching()
@@ -1297,6 +1306,42 @@ function App() {
     }
   }
 
+  const submitSwapApproval = async (tokenAddress: string, amountIn: string) => {
+    try {
+      const provider = await prepareWalletTransaction()
+      if (!provider) {
+        return
+      }
+
+      setNotice({ kind: 'info', message: text.notice.confirmSwapApproval })
+      const result = await approvePancakeSwapToken(provider, tokenAddress, amountIn, language)
+      setNotice({ kind: 'info', message: text.notice.swapApprovalSubmitted(shortHash(result.hash)) })
+      await waitForTransactionReceipt(provider, result.hash, 120_000, language)
+      setNotice({ kind: 'success', message: text.notice.swapApprovalConfirmed })
+    } catch (error) {
+      setNotice({ kind: 'error', message: readProviderErrorMessage(error) })
+      throw error
+    }
+  }
+
+  const submitSwap = async (request: PancakeSwapRequest) => {
+    try {
+      const provider = await prepareWalletTransaction()
+      if (!provider) {
+        return
+      }
+
+      setNotice({ kind: 'info', message: text.notice.confirmSwap })
+      const result = await executePancakeSwap(provider, { ...request, locale: language })
+      setNotice({ kind: 'info', message: text.notice.swapSubmitted(shortHash(result.hash)) })
+      await waitForTransactionReceipt(provider, result.hash, 120_000, language)
+      setNotice({ kind: 'success', message: text.notice.swapConfirmed })
+    } catch (error) {
+      setNotice({ kind: 'error', message: readProviderErrorMessage(error) })
+      throw error
+    }
+  }
+
   const navigate = (nextPage: PageKey) => {
     window.location.hash = nextPage === 'home' ? '#/' : `#/${nextPage}`
     setPage(nextPage)
@@ -1304,9 +1349,8 @@ function App() {
   }
 
   const openSwap = (tokenAddress?: string) => {
-    if (tokenAddress) {
-      window.open(buildPancakeSwapUrl(tokenAddress, 'buy'), '_blank', 'noreferrer')
-    }
+    window.location.hash = tokenAddress ? `#/swap?token=${tokenAddress}` : '#/swap'
+    setPage('swap')
     setMenuOpen(false)
   }
 
@@ -1356,6 +1400,19 @@ function App() {
           submitProjectRefund={submitProjectRefund}
           submitWhitelistAllowances={submitWhitelistAllowances}
           submitWhitelistMode={submitWhitelistMode}
+          text={text}
+          wallet={wallet}
+        />
+      )}
+      {page === 'swap' && (
+        <SwapPage
+          connectWallet={connectWallet}
+          initialTokenAddress={readSwapTokenFromHash()}
+          language={language}
+          projects={projects}
+          projectsStatus={projectsStatus}
+          submitSwap={submitSwap}
+          submitSwapApproval={submitSwapApproval}
           text={text}
           wallet={wallet}
         />
@@ -1446,13 +1503,14 @@ function Header({
 }) {
   const nav = [
     { page: 'home' as PageKey, label: text.nav.home, icon: <Home size={17} /> },
+    { page: 'swap' as PageKey, label: text.nav.swap, icon: <ArrowUpDown size={17} /> },
     { page: 'community' as PageKey, label: text.nav.community, icon: <MessageCircle size={17} /> },
     { page: 'verify' as PageKey, label: text.nav.verify, icon: <FileCode2 size={17} /> },
   ]
   const socialLinks = [
-    { href: normalizeExternalUrl(import.meta.env.VITE_TELEGRAM_URL), label: 'Telegram', icon: <Send size={17} /> },
-    { href: normalizeExternalUrl(import.meta.env.VITE_X_URL), label: 'X', icon: <AtSign size={17} /> },
-  ].filter((item) => item.href)
+    { href: panguTelegramUrl, label: 'Telegram', icon: <Send size={17} /> },
+    { href: panguXUrl, label: '@PANGUXQT', icon: <AtSign size={17} /> },
+  ]
 
   return (
     <header className="topbar">
@@ -1475,7 +1533,9 @@ function Header({
               ? '铸造'
               : activePage === 'community'
                 ? '社区'
-                : '发射'}
+                : activePage === 'swap'
+                  ? 'Swap'
+                  : '发射'}
           </small>
         </span>
       </a>
@@ -2492,6 +2552,256 @@ function AddressLine({
   )
 }
 
+function SwapPage({
+  connectWallet,
+  initialTokenAddress,
+  language,
+  projects,
+  projectsStatus,
+  submitSwap,
+  submitSwapApproval,
+  text,
+  wallet,
+}: {
+  connectWallet: () => void
+  initialTokenAddress: string
+  language: Language
+  projects: LaunchProject[]
+  projectsStatus: ProjectsStatus
+  submitSwap: (request: PancakeSwapRequest) => Promise<void>
+  submitSwapApproval: (tokenAddress: string, amountIn: string) => Promise<void>
+  text: (typeof copy)[Language]
+  wallet: WalletState
+}) {
+  const [tokenAddress, setTokenAddress] = useState(initialTokenAddress)
+  const [direction, setDirection] = useState<PancakeSwapDirection>('buy')
+  const [amount, setAmount] = useState('')
+  const [slippage, setSlippage] = useState('8')
+  const [quote, setQuote] = useState<PancakeSwapQuote | null>(null)
+  const [quoteStatus, setQuoteStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const [quoteError, setQuoteError] = useState('')
+  const [pendingAction, setPendingAction] = useState('')
+  const tradableProjects = projects.filter((project) => project.finalized)
+  const selectedProject = tradableProjects.find(
+    (project) => project.token.toLowerCase() === tokenAddress.trim().toLowerCase(),
+  )
+
+  useEffect(() => {
+    if (initialTokenAddress) {
+      setTokenAddress(initialTokenAddress)
+    }
+  }, [initialTokenAddress])
+
+  useEffect(() => {
+    setQuote(null)
+    setQuoteError('')
+    setQuoteStatus('idle')
+  }, [amount, direction, slippage, tokenAddress])
+
+  const readQuote = async () => {
+    setQuoteStatus('loading')
+    setQuoteError('')
+
+    try {
+      const nextQuote = await fetchPancakeSwapQuote({
+        tokenAddress,
+        amount,
+        direction,
+        slippageBps: slippageToBps(slippage),
+        account: wallet.account,
+        locale: language,
+      })
+      setQuote(nextQuote)
+      setQuoteStatus('ready')
+    } catch (error) {
+      setQuote(null)
+      setQuoteStatus('error')
+      setQuoteError(readProviderErrorMessage(error))
+    }
+  }
+
+  const approve = async () => {
+    if (!quote) {
+      return
+    }
+
+    setPendingAction('approve')
+    try {
+      await submitSwapApproval(tokenAddress, quote.amountIn)
+      await readQuote()
+    } finally {
+      setPendingAction('')
+    }
+  }
+
+  const swap = async () => {
+    setPendingAction('swap')
+    try {
+      await submitSwap({
+        tokenAddress,
+        amount,
+        direction,
+        slippageBps: slippageToBps(slippage),
+        locale: language,
+      })
+      setQuote(null)
+      setQuoteStatus('idle')
+    } finally {
+      setPendingAction('')
+    }
+  }
+
+  return (
+    <main className="page narrow">
+      <section className="swap-hero">
+        <div>
+          <p>PancakeSwap V2</p>
+          <h1>{text.swap.title}</h1>
+          <span>{text.swap.desc}</span>
+        </div>
+        <button className="wallet-button" type="button" onClick={connectWallet}>
+          <Wallet size={17} />
+          {wallet.account ? shortAddress(wallet.account) : text.wallet.connect}
+        </button>
+      </section>
+
+      <section className="swap-grid">
+        <form
+          className="swap-card"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void readQuote()
+          }}
+        >
+          <div className="swap-mode" role="group" aria-label={text.swap.title}>
+            <button
+              className={direction === 'buy' ? 'active' : ''}
+              type="button"
+              onClick={() => setDirection('buy')}
+            >
+              {text.swap.buy}
+            </button>
+            <button
+              className={direction === 'sell' ? 'active' : ''}
+              type="button"
+              onClick={() => setDirection('sell')}
+            >
+              {text.swap.sell}
+            </button>
+          </div>
+
+          <label className="field">
+            <span>{text.swap.selectProject}</span>
+            <select
+              value={selectedProject ? selectedProject.token : 'custom'}
+              onChange={(event) => {
+                if (event.target.value !== 'custom') {
+                  setTokenAddress(event.target.value)
+                }
+              }}
+            >
+              <option value="custom">{text.swap.customToken}</option>
+              {tradableProjects.map((project) => (
+                <option key={project.token} value={project.token}>
+                  {project.name} ({project.symbol})
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <InputField label={text.swap.tokenAddress} value={tokenAddress} onChange={setTokenAddress} />
+
+          <div className="fields two">
+            <InputField
+              label={`${text.swap.amount} ${direction === 'buy' ? 'BNB' : quote?.tokenSymbol ?? ''}`}
+              value={amount}
+              onChange={setAmount}
+            />
+            <InputField label={text.swap.slippage} value={slippage} onChange={setSlippage} />
+          </div>
+
+          <button className="submit-button" type="submit" disabled={quoteStatus === 'loading'}>
+            <ArrowUpDown size={18} />
+            {quoteStatus === 'loading' ? text.swap.pending : quote ? text.swap.refresh : text.swap.quote}
+          </button>
+
+          {projectsStatus !== 'loading' && tradableProjects.length === 0 && (
+            <p className="muted-line">{text.swap.noProjects}</p>
+          )}
+
+          {quoteError && (
+            <div className="config-warning compact-warning">
+              <AlertCircle size={17} />
+              {quoteError}
+            </div>
+          )}
+
+          {quote && (
+            <div className="swap-quote">
+              <div>
+                <span>{text.swap.route}</span>
+                <strong>{quote.routeLabel}</strong>
+              </div>
+              <div>
+                <span>{text.swap.expected}</span>
+                <strong>
+                  {quote.formattedAmountOut} {quote.targetSymbol}
+                </strong>
+              </div>
+              <div>
+                <span>{text.swap.minimum}</span>
+                <strong>
+                  {quote.formattedMinimumAmountOut} {quote.targetSymbol}
+                </strong>
+              </div>
+            </div>
+          )}
+
+          <div className="swap-actions">
+            {quote?.needsApproval && (
+              <button type="button" disabled={pendingAction === 'approve'} onClick={approve}>
+                <Wallet size={16} />
+                {pendingAction === 'approve' ? text.swap.pending : text.swap.approve}
+              </button>
+            )}
+            <button
+              className="submit-button"
+              type="button"
+              disabled={!quote || quote.needsApproval || pendingAction === 'swap'}
+              onClick={swap}
+            >
+              <ArrowUpDown size={18} />
+              {pendingAction === 'swap' ? text.swap.pending : text.swap.swap}
+            </button>
+          </div>
+        </form>
+
+        <aside className="swap-card swap-side">
+          <div className="audit-facts">
+            <div>
+              <span>{text.swap.router}</span>
+              <strong>{shortAddress(PANCAKE_V2_ROUTER_ADDRESS)}</strong>
+            </div>
+            <div>
+              <span>{text.swap.route}</span>
+              <strong>{quote?.routeLabel ?? (direction === 'buy' ? 'BNB -> TOKEN' : 'TOKEN -> BNB')}</strong>
+            </div>
+          </div>
+          <p className="muted-line">{text.swap.quoteHint}</p>
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={() => window.open(buildPancakeSwapUrl(tokenAddress, direction), '_blank', 'noreferrer')}
+          >
+            <ExternalLink size={17} />
+            {text.swap.openPancake}
+          </button>
+        </aside>
+      </section>
+    </main>
+  )
+}
+
 function LaunchPage({
   advancedTax,
   allocation,
@@ -3367,10 +3677,14 @@ function CommunityPage({
             <button
               className="primary-button"
               type="button"
-              onClick={() => window.open(normalizeExternalUrl(import.meta.env.VITE_TELEGRAM_URL) || 'https://telegram.org/', '_blank', 'noreferrer')}
+              onClick={() => window.open(panguTelegramUrl, '_blank', 'noreferrer')}
             >
               <Send size={18} />
               打开 Telegram
+            </button>
+            <button className="ghost-button" type="button" onClick={() => window.open(panguXUrl, '_blank', 'noreferrer')}>
+              <AtSign size={18} />
+              关注 @PANGUXQT
             </button>
             <button className="ghost-button" type="button" onClick={() => navigate('launch')}>
               <Rocket size={18} />
@@ -3495,6 +3809,11 @@ function readLanguagePreference(): Language {
 function readPageFromHash(): PageKey {
   const rawPage = window.location.hash.replace(/^#\/?/, '').split('?')[0]
   return pages.includes(rawPage as PageKey) ? (rawPage as PageKey) : 'home'
+}
+
+function readSwapTokenFromHash() {
+  const query = window.location.hash.split('?')[1] ?? ''
+  return new URLSearchParams(query).get('token') ?? ''
 }
 
 function readDetailTokenFromHash() {
@@ -3664,6 +3983,15 @@ function formatDisplayAmount(value: string) {
   const groupedWhole = cleanWhole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
   return cleanFraction ? `${groupedWhole}.${cleanFraction}` : groupedWhole
+}
+
+function slippageToBps(value: string) {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) {
+    return 0
+  }
+
+  return Math.round(parsed * 100)
 }
 
 function shortHash(hash: string) {

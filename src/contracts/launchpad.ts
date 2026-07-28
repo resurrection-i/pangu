@@ -325,7 +325,7 @@ export async function createLaunchToken(
     value: toQuantity(BigInt(launchpadConfig.creationFeeWei)),
     data,
   }
-  const readProvider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId)
+  const readProvider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId, { staticNetwork: true })
   let gas: string
   let gasPrice: string | undefined
 
@@ -796,7 +796,7 @@ export async function mintLaunchProject(
     data,
   }
   const isNativeMint = project.paymentToken.toLowerCase() === ZeroAddress
-  const readProvider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId)
+  const readProvider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId, { staticNetwork: true })
   let gas: string
   let gasPrice: string | undefined
 
@@ -890,7 +890,7 @@ export async function fetchLaunchProjects(account = ''): Promise<LaunchProject[]
     return []
   }
 
-  const provider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId)
+  const provider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId, { staticNetwork: true })
   const factory = new Contract(launchpadConfig.factoryAddress, launchFactoryAbi, provider)
   const previousFactory = new Contract(launchpadConfig.factoryAddress, previousLaunchFactoryAbi, provider)
   const legacyFactory = new Contract(launchpadConfig.factoryAddress, legacyLaunchFactoryAbi, provider)
@@ -1075,8 +1075,8 @@ export function watchLaunchProjectEvents(projects: LaunchProject[], onUpdate: ()
     return () => {}
   }
 
-  const provider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId)
-  provider.pollingInterval = 3_000
+  const provider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId, { staticNetwork: true })
+  provider.pollingInterval = 10_000
   const listeners: Array<{ filter: { address: string; topics: string[] }; handler: () => void }> = []
   let refreshTimer: ReturnType<typeof globalThis.setTimeout> | null = null
 
