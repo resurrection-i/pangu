@@ -1736,36 +1736,28 @@ function HomePage({
               </div>
             ))}
           </div>
-          <div className="console-flow compact">
-            {text.home.consoleFlow.map((step, index) => (
-              <span key={step}>
-                <em>{String(index + 1).padStart(2, '0')}</em>
-                {step}
-              </span>
-            ))}
-          </div>
-          <div className="factory-card">
-            <div className="factory-card-head">
-              <span>{text.home.factoryCard.label}</span>
-              <span className={isLaunchpadConfigured ? 'online' : 'offline'}>
-                {isLaunchpadConfigured ? text.home.factoryCard.online : text.home.factoryCard.offline}
-              </span>
+          <div className="launch-flow">
+            <p className="launch-flow-title">{text.home.consoleAria}</p>
+            <div className="launch-flow-steps">
+              {text.home.consoleFlow.map((step, index) => (
+                <div key={step} className="launch-flow-step">
+                  <em>{index + 1}</em>
+                  <span>{step}</span>
+                </div>
+              ))}
             </div>
-            <div className="factory-card-body">
-              <strong>
-                {isLaunchpadConfigured
-                  ? shortAddress(launchpadConfig.factoryAddress)
-                  : text.home.factoryCard.unconfigured}
-              </strong>
-              {isLaunchpadConfigured && (
+          </div>
+          {isLaunchpadConfigured && (
+            <div className="contract-address-bar">
+              <div className="contract-address-info">
+                <span>{text.home.factoryCard.label}</span>
+                <strong>{shortAddress(launchpadConfig.factoryAddress)}</strong>
                 <span className="verified-badge">
-                  <ShieldCheck size={12} />
+                  <ShieldCheck size={11} />
                   {text.home.factoryCard.verified}
                 </span>
-              )}
-            </div>
-            {isLaunchpadConfigured && (
-              <div className="factory-card-actions">
+              </div>
+              <div className="contract-address-actions">
                 <button
                   type="button"
                   onClick={async () => {
@@ -1774,20 +1766,18 @@ function HomePage({
                     window.setTimeout(() => setFactoryCopied(false), 1400)
                   }}
                 >
-                  {factoryCopied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
-                  {factoryCopied ? text.home.factoryCard.copied : text.home.factoryCard.copy}
+                  {factoryCopied ? <CheckCircle2 size={13} /> : <Copy size={13} />}
                 </button>
                 <a
                   href={`${BNB_CHAIN.blockExplorerUrls[0]}/address/${launchpadConfig.factoryAddress}`}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <ExternalLink size={14} />
-                  {text.home.factoryCard.view}
+                  <ExternalLink size={13} />
                 </a>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </aside>
       </section>
 
