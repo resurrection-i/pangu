@@ -717,10 +717,10 @@ const allocationTranslations: Record<Language, Record<AllocationKey, { label: st
     burn: { label: '销毁', hint: '减少供应' },
   },
   en: {
-    marketing: { label: '营销', hint: '20% 路由' },
-    liquidity: { label: '回流', hint: 'LP 路由' },
-    rewards: { label: '持币分红', hint: '30% DOGE 侧' },
-    burn: { label: '回购销毁', hint: '70% 销毁侧' },
+    marketing: { label: 'Marketing', hint: 'sent to receiver' },
+    liquidity: { label: 'Buyback', hint: 'LP locked on launch' },
+    rewards: { label: 'Holder rewards', hint: 'sent to dividend pool' },
+    burn: { label: 'Burn', hint: 'reduces supply' },
   },
 }
 
@@ -758,7 +758,7 @@ function App() {
     ...initialForm,
     description: defaultDescriptions.zh,
   }))
-  const [templateId, setTemplateId] = useState<TemplateId>('buyback')
+  const [templateId, setTemplateId] = useState<TemplateId>('standard')
   const [allocation, setAllocation] = useState<AllocationState>(initialAllocation)
   const [advancedTax, setAdvancedTax] = useState<AdvancedTaxState>(initialAdvancedTax)
   const [buyTax, setBuyTax] = useState(3)
@@ -2301,9 +2301,7 @@ function ProjectDetailPage({
   }
 
   const explorerUrl = `${BNB_CHAIN.blockExplorerUrls[0]}/address/${project.token}`
-  const splitTotal = project.fundFeeBps + project.lpFeeBps + project.dividendFeeBps + project.burnFeeBps
-  const hiddenRouteBps = project.fundFeeBps + Math.max(0, 10_000 - splitTotal)
-  const visibleBurnBps = project.burnFeeBps + hiddenRouteBps
+  const marketingSplitBps = project.fundFeeBps
   const taxShare = (taxBps: number, shareBps: number) => (taxBps * shareBps) / 10_000
   const visibleTaxPortion = (taxBps: number, splitBps: number) => taxShare(taxBps, splitBps)
   const portionPair = (splitBps: number) =>
@@ -2317,9 +2315,10 @@ function ProjectDetailPage({
     }
 
     const splitSummary = [
+      `${allocation.marketing.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, marketingSplitBps))}`,
       `${allocation.liquidity.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.lpFeeBps))}`,
       `${allocation.rewards.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.dividendFeeBps))}`,
-      `${allocation.burn.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, visibleBurnBps))}`,
+      `${allocation.burn.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.burnFeeBps))}`,
     ]
 
     return `${formatBps(taxBps)} (${splitSummary.join(' / ')})`
@@ -2421,7 +2420,7 @@ function ProjectDetailPage({
           />
           <DetailRow
             label={text.detail.burn}
-            value={`${portionPair(visibleBurnBps)} -> ${text.detail.toBurn}`}
+            value={`${portionPair(project.burnFeeBps)} -> ${text.detail.toBurn}`}
           />
           <DetailRow
             label={text.detail.rewardThreshold}
@@ -3219,24 +3218,22 @@ function LaunchPage({
               </div>
               <div className="tax-split">
                 <TaxRing allocation={allocation} language={language} totalLabel={text.launch.totalAllocation} />
-                <div className="fixed-tokenomics">
-                  <div>
-                    <span>自动回购销毁</span>
-                    <strong>70%</strong>
-                    <em>BNB 回购代币并发送到黑洞地址。</em>
-                  </div>
-                  <div>
-                    <span>持币分红</span>
-                    <strong>30%</strong>
-                    <em>BNB 买入 DOGE 并注入分红池。</em>
-                  </div>
-                  <div>
-                    <span>自动循环</span>
-                    <strong>10% / 60秒</strong>
-                    <em>每轮处理可用待处理 BNB 的 10%，无最低 BNB 门槛。</em>
-                  </div>
+                <div className="tax-sliders">
+                  {allocationMeta.map((item) => {
+                    const itemText = allocationTranslations[language][item.key]
+
+                    return (
+                      <SliderField
+                        key={item.key}
+                        label={`${itemText.label} · ${itemText.hint}`}
+                        max={100}
+                        value={allocation[item.key]}
+                        onChange={(value) => updateAllocation(item.key, value)}
+                      />
+                    )
+                  })}
                   <p className={allocationTotal > 100 ? 'tax-warning' : 'tax-note'}>
-                    固定项目路由：70% 回购销毁，30% DOGE 持币分红，0% LP 路由。
+                    {allocationTotal > 100 ? text.launch.allocationOverflow : text.launch.unallocated(unallocated)}
                   </p>
                 </div>
               </div>

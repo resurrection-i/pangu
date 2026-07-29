@@ -40,10 +40,10 @@ export const initialForm: FormState = {
 }
 
 export const initialAllocation: AllocationState = {
-  marketing: 20,
-  liquidity: 0,
-  rewards: 30,
-  burn: 50,
+  marketing: 44,
+  liquidity: 18,
+  rewards: 16,
+  burn: 10,
 }
 
 export const templates: LaunchTemplate[] = [
@@ -68,11 +68,11 @@ export const templates: LaunchTemplate[] = [
   {
     id: 'buyback',
     name: '回流核心',
-    tag: '70/30',
+    tag: 'Flow',
     fee: '0.005 BNB',
-    summary: '对外展示 70% 回购销毁 + 30% DOGE 持币分红的税收流向。',
-    bestFor: '白名单发射、自动回购代币、持币奖励社区',
-    checks: ['70% 回购销毁', '30% DOGE 分红', '白名单金库'],
+    summary: '税收拆分可映射到基金、回流、奖励和销毁，适合长期运营型项目。',
+    bestFor: '交易税玩法、持续运营、回购叙事',
+    checks: ['买卖税', '基金分配', '销毁比例', '接收钱包'],
   },
   {
     id: 'nftReward',
@@ -93,26 +93,26 @@ export const allocationMeta: Array<{
 }> = [
   {
     key: 'burn',
-    label: '回购销毁',
-    hint: '70% 销毁侧',
-    color: '#d4af37',
+    label: '销毁',
+    hint: '减少供应',
+    color: '#ff8a9a',
   },
   {
     key: 'marketing',
     label: '营销',
-    hint: '20% 路由',
-    color: '#27ae60',
+    hint: '进入接收钱包',
+    color: '#9bf6c2',
   },
   {
     key: 'liquidity',
     label: '回流',
-    hint: 'LP 路由',
+    hint: '开盘锁 LP',
     color: '#7dd3fc',
   },
   {
     key: 'rewards',
     label: '持币分红',
-    hint: '30% DOGE 侧',
+    hint: '进入分红池',
     color: '#b8c7ff',
   },
 ]
