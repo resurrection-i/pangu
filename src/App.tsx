@@ -714,10 +714,10 @@ const templateTranslations: Record<Language, Partial<Record<TemplateId, Partial<
     },
     buyback: {
       name: '回流核心',
-      tag: '70/30',
-      summary: '对外展示 70% 回购销毁 + 30% DOGE 持币分红的税收流向。',
-      bestFor: '白名单发射、自动回购代币、持币奖励社区',
-      checks: ['70% 回购销毁', '30% DOGE 分红', '白名单金库'],
+      tag: 'Flow',
+      summary: '税收拆分可映射到基金、回流、奖励和销毁，适合长期运营型项目。',
+      bestFor: '交易税玩法、持续运营、回购叙事',
+      checks: ['买卖税', '基金分配', '销毁比例', '接收钱包'],
     },
     nftReward: {
       name: '持币分红',
@@ -3751,7 +3751,7 @@ function CommunityPage({
         </div>
         <div className="community-badge" aria-label="社区徽章">
           <strong>{appSymbol}</strong>
-          <span>70% 销毁 | 30% DOGE 分红 | BSC</span>
+          <span>20% 营销 | 0% 回流 | 30% DOGE 分红 | 50% 销毁 | BSC</span>
         </div>
       </section>
 

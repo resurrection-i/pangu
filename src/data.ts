@@ -40,10 +40,10 @@ export const initialForm: FormState = {
 }
 
 export const initialAllocation: AllocationState = {
-  marketing: 44,
-  liquidity: 18,
-  rewards: 16,
-  burn: 10,
+  marketing: 20,
+  liquidity: 0,
+  rewards: 30,
+  burn: 50,
 }
 
 export const templates: LaunchTemplate[] = [
