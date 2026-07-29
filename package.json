@@ -28,11 +28,14 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.1.3",
     "@nomicfoundation/hardhat-verify": "^2.1.3",
+    "@types/node": "^26.1.2",
     "@vitejs/plugin-react": "^4.3.4",
     "dotenv": "^16.6.1",
     "ethers": "^6.16.0",
     "hardhat": "^2.28.6",
+    "sharp": "^0.35.3",
     "solc": "^0.8.28",
+    "terser": "^5.49.0",
     "vite": "^5.4.11"
   },
   "description": "盘古小拳头发射台是一个基于 BNB Smart Chain 的 Mint 发射平台，使用 Vite、React 和 Hardhat 构建。",

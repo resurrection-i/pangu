@@ -82,6 +82,52 @@ const MINTED_EVENT_TOPIC = id('Minted(address,uint256,uint256,uint256,uint256,ui
 const LAUNCH_FINALIZED_EVENT_TOPIC = id('LaunchFinalized(uint256)')
 const TRADING_ENABLED_EVENT_TOPIC = id('TradingEnabled()')
 
+let cachedReadProvider: JsonRpcProvider | null = null
+let cachedReadProviderAt = 0
+const READ_PROVIDER_CACHE_MS = 45_000
+
+function getReadProviderSync(): JsonRpcProvider {
+  if (cachedReadProvider) {
+    return cachedReadProvider
+  }
+
+  return new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId, { staticNetwork: true })
+}
+
+async function asyncPool<T, R>(concurrency: number, items: T[], task: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length)
+  const iterator = items.entries()
+  const workers = Array.from({ length: concurrency }, async () => {
+    for (const [index, item] of iterator) {
+      results[index] = await task(item)
+    }
+  })
+
+  await Promise.all(workers)
+  return results
+}
+
+async function getFastestReadProvider(): Promise<JsonRpcProvider> {
+  if (cachedReadProvider && Date.now() - cachedReadProviderAt < READ_PROVIDER_CACHE_MS) {
+    return cachedReadProvider
+  }
+
+  const candidates = BNB_CHAIN.rpcUrls.map(
+    (url) => new JsonRpcProvider(url, launchpadConfig.chainId, { staticNetwork: true }),
+  )
+
+  const fastest = await Promise.race(
+    candidates.map(async (provider) => {
+      await provider.getBlockNumber()
+      return provider
+    }),
+  ).catch(() => candidates[0])
+
+  cachedReadProvider = fastest
+  cachedReadProviderAt = Date.now()
+  return fastest
+}
+
 export const isLaunchpadConfigured =
   Boolean(launchpadConfig.factoryAddress) &&
   isAddress(launchpadConfig.factoryAddress) &&
@@ -325,7 +371,7 @@ export async function createLaunchToken(
     value: toQuantity(BigInt(launchpadConfig.creationFeeWei)),
     data,
   }
-  const readProvider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId, { staticNetwork: true })
+  const readProvider = await getFastestReadProvider()
   let gas: string
   let gasPrice: string | undefined
 
@@ -796,7 +842,7 @@ export async function mintLaunchProject(
     data,
   }
   const isNativeMint = project.paymentToken.toLowerCase() === ZeroAddress
-  const readProvider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId, { staticNetwork: true })
+  const readProvider = await getFastestReadProvider()
   let gas: string
   let gasPrice: string | undefined
 
@@ -890,7 +936,7 @@ export async function fetchLaunchProjects(account = ''): Promise<LaunchProject[]
     return []
   }
 
-  const provider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId, { staticNetwork: true })
+  const provider = await getFastestReadProvider()
   const factory = new Contract(launchpadConfig.factoryAddress, launchFactoryAbi, provider)
   const previousFactory = new Contract(launchpadConfig.factoryAddress, previousLaunchFactoryAbi, provider)
   const legacyFactory = new Contract(launchpadConfig.factoryAddress, legacyLaunchFactoryAbi, provider)
@@ -903,15 +949,10 @@ export async function fetchLaunchProjects(account = ''): Promise<LaunchProject[]
 
   const visibleAddresses = tokenAddresses.map(String).filter((address) => !isHiddenLaunchProject(address))
 
-  const projects = (
-    await Promise.all(
-      visibleAddresses.map((tokenAddress) =>
-        readOneLaunchProject(factory, previousFactory, legacyFactory, tokenAddress, provider, account).catch(
-          () => null,
-        ),
-      ),
-    )
-  ).filter((project): project is LaunchProject => project !== null)
+  const projectResults = await asyncPool(6, visibleAddresses, (tokenAddress) =>
+    readOneLaunchProject(factory, previousFactory, legacyFactory, tokenAddress, provider, account).catch(() => null),
+  )
+  const projects = projectResults.filter((project): project is LaunchProject => project !== null)
 
   return projects
 }
@@ -1092,7 +1133,7 @@ export function watchLaunchProjectEvents(projects: LaunchProject[], onUpdate: ()
     return () => {}
   }
 
-  const provider = new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId, { staticNetwork: true })
+  const provider = getReadProviderSync()
   provider.pollingInterval = 10_000
   const listeners: Array<{ filter: { address: string; topics: string[] }; handler: () => void }> = []
   let refreshTimer: ReturnType<typeof globalThis.setTimeout> | null = null
