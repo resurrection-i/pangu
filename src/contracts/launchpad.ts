@@ -896,174 +896,191 @@ export async function fetchLaunchProjects(account = ''): Promise<LaunchProject[]
   const legacyFactory = new Contract(launchpadConfig.factoryAddress, legacyLaunchFactoryAbi, provider)
   const count = Number(await factory.allTokensLength())
   const start = Math.max(0, count - 24)
-  const projects: LaunchProject[] = []
 
-  for (let index = count - 1; index >= start; index -= 1) {
-    const tokenAddress = String(await factory.allTokens(index))
-    if (isHiddenLaunchProject(tokenAddress)) {
-      continue
-    }
+  const tokenAddresses = await Promise.all(
+    Array.from({ length: count - start }, (_, index) => factory.allTokens(count - 1 - index)),
+  )
 
-    const project = await readProject(factory, previousFactory, legacyFactory, tokenAddress)
-    const creator = String(project.creator ?? project[0])
-    const vaultAddress = String(project.vault ?? project[2])
-    const paymentToken = String(project.paymentToken ?? project[3])
-    const receiver = String(project.receiver ?? project[4])
-    const hasPlatformFeeShape = project.platformFeeReceiver !== undefined
-    const fieldOffset = hasPlatformFeeShape ? 1 : 0
-    const platformFeeReceiver = hasPlatformFeeShape ? String(project.platformFeeReceiver ?? project[5] ?? ZeroAddress) : ZeroAddress
-    const platformFeeBps = 0
-    const totalSupply = BigInt(project.totalSupply ?? project[6 + fieldOffset] ?? 0)
-    const mintCount = BigInt(project.mintCount ?? project[7 + fieldOffset] ?? 0)
-    const hasNewProjectShape = project.whitelistMintCount !== undefined
-    const whitelistMintCount = hasNewProjectShape ? BigInt(project.whitelistMintCount ?? project[8 + fieldOffset] ?? 0) : 0n
-    const publicMintCount = hasNewProjectShape ? BigInt(project.publicMintCount ?? project[9 + fieldOffset] ?? 0) : mintCount
-    const mintPrice = BigInt(hasNewProjectShape ? project.mintPrice ?? project[10 + fieldOffset] ?? 0 : project.mintPrice ?? project[8] ?? 0)
-    const hasMaxMintShape = project.maxMintPerWallet !== undefined
-    const maxMintPerWallet = hasMaxMintShape ? BigInt(project.maxMintPerWallet ?? project[11 + fieldOffset] ?? 0) : 0n
-    const maxMintOffset = hasMaxMintShape ? 1 : 0
-    const whitelistEnabled = Boolean(hasNewProjectShape ? project.whitelistEnabled ?? project[11 + fieldOffset + maxMintOffset] : project.whitelistEnabled ?? project[9])
-    const metadataUri = String(hasNewProjectShape ? project.metadataUri ?? project[12 + fieldOffset + maxMintOffset] ?? '' : project.metadataUri ?? project[10] ?? '')
-    const createdAt = Number(hasNewProjectShape ? project.createdAt ?? project[13 + fieldOffset + maxMintOffset] ?? 0 : project.createdAt ?? project[11] ?? 0)
-    const rewardToken = hasNewProjectShape ? String(project.rewardToken ?? project[14 + fieldOffset + maxMintOffset] ?? ZeroAddress) : ZeroAddress
-    const rewardThreshold = hasNewProjectShape ? BigInt(project.rewardThreshold ?? project[15 + fieldOffset + maxMintOffset] ?? 0) : 0n
-    const buyTaxBps = hasNewProjectShape ? Number(project.buyTaxBps ?? project[16 + fieldOffset + maxMintOffset] ?? 0) : 0
-    const sellTaxBps = hasNewProjectShape ? Number(project.sellTaxBps ?? project[17 + fieldOffset + maxMintOffset] ?? 0) : 0
-    const hasAdvancedProjectShape = project.transferTaxBps !== undefined
-    const advancedOffset = fieldOffset + maxMintOffset
-    const transferTaxBps = hasAdvancedProjectShape ? Number(project.transferTaxBps ?? project[18 + advancedOffset] ?? 0) : 0
-    const addLiquidityTaxBps = hasAdvancedProjectShape ? Number(project.addLiquidityTaxBps ?? project[19 + advancedOffset] ?? 0) : 0
-    const removeLiquidityTaxBps = hasAdvancedProjectShape ? Number(project.removeLiquidityTaxBps ?? project[20 + advancedOffset] ?? 0) : 0
-    const launchProtectionTaxBps = hasAdvancedProjectShape ? Number(project.launchProtectionTaxBps ?? project[21 + advancedOffset] ?? 0) : 0
-    const launchProtectionBlocks = hasAdvancedProjectShape ? Number(project.launchProtectionBlocks ?? project[22 + advancedOffset] ?? 0) : 0
-    const claimWait = hasAdvancedProjectShape ? Number(project.claimWait ?? project[23 + advancedOffset] ?? 0) : 60
-    const splitIndexOffset = hasAdvancedProjectShape ? 6 : 0
-    const splitOffset = fieldOffset + maxMintOffset + splitIndexOffset
-    const fundFeeBps = hasNewProjectShape ? Number(project.fundFeeBps ?? project[18 + splitOffset] ?? 0) : 0
-    const lpFeeBps = hasNewProjectShape ? Number(project.lpFeeBps ?? project[19 + splitOffset] ?? 0) : 0
-    const dividendFeeBps = hasNewProjectShape ? Number(project.dividendFeeBps ?? project[20 + splitOffset] ?? 0) : 0
-    const burnFeeBps = hasNewProjectShape ? Number(project.burnFeeBps ?? project[21 + splitOffset] ?? 0) : 0
-    const liquidityTokenBps = hasAdvancedProjectShape ? Number(project.liquidityTokenBps ?? project[22 + splitOffset] ?? 5000) : 5000
+  const visibleAddresses = tokenAddresses.map(String).filter((address) => !isHiddenLaunchProject(address))
 
-    const token = new Contract(tokenAddress, tokenAbi, provider)
-    const vault = new Contract(vaultAddress, mintVaultAbi, provider)
-
-    const [
-      name,
-      symbol,
-      mintedCount,
-      whitelistMintedCount,
-      publicMintedCount,
-      vaultWhitelistLimit,
-      vaultPublicLimit,
-      refundDeadline,
-      finalized,
-      tokensPerMint,
-      userMintedCount,
-      userPaid,
-      refundAllowance,
-      whitelistRemaining,
-      totalWhitelistAllowance,
-      mintPaymentAllowance,
-      vaultTokenBalance,
-      userDividendUnpaid,
-    ] = await Promise.all([
-      token.name().catch(() => 'Unknown'),
-      token.symbol().catch(() => 'TOKEN'),
-      vault.mintedCount().catch(() => 0n),
-      vault.whitelistMintedCount().catch(() => 0n),
-      vault.publicMintedCount().catch(() => 0n),
-      vault.whitelistMintLimit().catch(() => whitelistMintCount),
-      vault.publicMintLimit().catch(() => publicMintCount),
-      vault.refundDeadline().catch(() => 0n),
-      vault.finalized().catch(() => false),
-      vault.tokensPerMint().catch(() => (mintCount > 0n ? totalSupply / mintCount : 0n)),
-      account && isAddress(account) ? vault.mintedByWallet(account).catch(() => 0n) : 0n,
-      account && isAddress(account) ? vault.paidByWallet(account).catch(() => 0n) : 0n,
-      account && isAddress(account) ? token.allowance(account, vaultAddress).catch(() => 0n) : 0n,
-      account && isAddress(account) ? vault.whitelistRemaining(account).catch(() => 0n) : 0n,
-      vault.totalWhitelistAllowance().catch(() => 0n),
-      account && isAddress(account) && paymentToken.toLowerCase() !== ZeroAddress
-        ? new Contract(paymentToken, tokenAbi, provider).allowance(account, vaultAddress).catch(() => 0n)
-        : 0n,
-      token.balanceOf(vaultAddress).catch(() => 0n),
-      account && isAddress(account) ? token.unpaidDividend(account).catch(() => 0n) : 0n,
-    ])
-
-    const mintedCountValue = BigInt(mintedCount)
-    const userMintedCountValue = BigInt(userMintedCount)
-    const refundTokenAmount = BigInt(tokensPerMint) * userMintedCountValue
-    const canRefund =
-      !Boolean(finalized) &&
-      Number(refundDeadline) > 0 &&
-      Date.now() >= Number(refundDeadline) * 1000 &&
-      BigInt(userPaid) > 0n &&
-      refundTokenAmount > 0n
-    const progress =
-      mintCount > 0n ? Math.min(100, Number((mintedCountValue * 10_000n) / mintCount) / 100) : 0
-    const metadata = parseMetadata(metadataUri)
-
-    projects.push({
-      creator,
-      token: tokenAddress,
-      vault: vaultAddress,
-      paymentToken,
-      receiver,
-      platformFeeReceiver,
-      platformFeeBps,
-      name: String(name),
-      symbol: String(symbol),
-      description: metadata.description || '链上发射项目',
-      avatar: metadata.avatar || '',
-      website: metadata.website || '',
-      telegram: metadata.telegram || '',
-      xLink: metadata.x || metadata.xLink || '',
-      totalSupply: formatUnits(totalSupply, 18),
-      mintCount: mintCount.toString(),
-      whitelistMintCount: BigInt(vaultWhitelistLimit).toString(),
-      publicMintCount: BigInt(vaultPublicLimit).toString(),
-      mintPrice: formatMintPrice(mintPrice, paymentToken),
-      mintPriceWei: mintPrice.toString(),
-      maxMintPerWallet: maxMintPerWallet.toString(),
-      paymentSymbol: getPaymentSymbol(paymentToken),
-      mintedCount: mintedCountValue.toString(),
-      whitelistMintedCount: BigInt(whitelistMintedCount).toString(),
-      publicMintedCount: BigInt(publicMintedCount).toString(),
-      refundDeadline: Number(refundDeadline),
-      finalized: Boolean(finalized),
-      userMintedCount: userMintedCountValue.toString(),
-      refundTokenAmount: refundTokenAmount.toString(),
-      refundNeedsApproval: canRefund && BigInt(refundAllowance) < refundTokenAmount,
-      userRefundAmount: formatRefundAmount(BigInt(userPaid), paymentToken),
-      canRefund,
-      whitelistRemaining: BigInt(whitelistRemaining).toString(),
-      totalWhitelistAllowance: BigInt(totalWhitelistAllowance).toString(),
-      mintPaymentAllowance: BigInt(mintPaymentAllowance).toString(),
-      rewardToken,
-      rewardThreshold: formatUnits(rewardThreshold, 18),
-      userDividendUnpaid: BigInt(userDividendUnpaid).toString(),
-      userDividendUnpaidFormatted: formatUnits(BigInt(userDividendUnpaid), 18),
-      buyTaxBps,
-      sellTaxBps,
-      transferTaxBps,
-      addLiquidityTaxBps,
-      removeLiquidityTaxBps,
-      launchProtectionTaxBps,
-      launchProtectionBlocks,
-      claimWait,
-      fundFeeBps,
-      lpFeeBps,
-      dividendFeeBps,
-      burnFeeBps,
-      liquidityTokenBps,
-      vaultTokenBalance: formatUnits(BigInt(vaultTokenBalance), 18),
-      progress,
-      whitelistEnabled,
-      createdAt,
-    })
-  }
+  const projects = (
+    await Promise.all(
+      visibleAddresses.map((tokenAddress) =>
+        readOneLaunchProject(factory, previousFactory, legacyFactory, tokenAddress, provider, account).catch(
+          () => null,
+        ),
+      ),
+    )
+  ).filter((project): project is LaunchProject => project !== null)
 
   return projects
+}
+
+async function readOneLaunchProject(
+  factory: Contract,
+  previousFactory: Contract,
+  legacyFactory: Contract,
+  tokenAddress: string,
+  provider: JsonRpcProvider,
+  account: string,
+): Promise<LaunchProject> {
+  const project = await readProject(factory, previousFactory, legacyFactory, tokenAddress)
+  const creator = String(project.creator ?? project[0])
+  const vaultAddress = String(project.vault ?? project[2])
+  const paymentToken = String(project.paymentToken ?? project[3])
+  const receiver = String(project.receiver ?? project[4])
+  const hasPlatformFeeShape = project.platformFeeReceiver !== undefined
+  const fieldOffset = hasPlatformFeeShape ? 1 : 0
+  const platformFeeReceiver = hasPlatformFeeShape ? String(project.platformFeeReceiver ?? project[5] ?? ZeroAddress) : ZeroAddress
+  const platformFeeBps = 0
+  const totalSupply = BigInt(project.totalSupply ?? project[6 + fieldOffset] ?? 0)
+  const mintCount = BigInt(project.mintCount ?? project[7 + fieldOffset] ?? 0)
+  const hasNewProjectShape = project.whitelistMintCount !== undefined
+  const whitelistMintCount = hasNewProjectShape ? BigInt(project.whitelistMintCount ?? project[8 + fieldOffset] ?? 0) : 0n
+  const publicMintCount = hasNewProjectShape ? BigInt(project.publicMintCount ?? project[9 + fieldOffset] ?? 0) : mintCount
+  const mintPrice = BigInt(hasNewProjectShape ? project.mintPrice ?? project[10 + fieldOffset] ?? 0 : project.mintPrice ?? project[8] ?? 0)
+  const hasMaxMintShape = project.maxMintPerWallet !== undefined
+  const maxMintPerWallet = hasMaxMintShape ? BigInt(project.maxMintPerWallet ?? project[11 + fieldOffset] ?? 0) : 0n
+  const maxMintOffset = hasMaxMintShape ? 1 : 0
+  const whitelistEnabled = Boolean(hasNewProjectShape ? project.whitelistEnabled ?? project[11 + fieldOffset + maxMintOffset] : project.whitelistEnabled ?? project[9])
+  const metadataUri = String(hasNewProjectShape ? project.metadataUri ?? project[12 + fieldOffset + maxMintOffset] ?? '' : project.metadataUri ?? project[10] ?? '')
+  const createdAt = Number(hasNewProjectShape ? project.createdAt ?? project[13 + fieldOffset + maxMintOffset] ?? 0 : project.createdAt ?? project[11] ?? 0)
+  const rewardToken = hasNewProjectShape ? String(project.rewardToken ?? project[14 + fieldOffset + maxMintOffset] ?? ZeroAddress) : ZeroAddress
+  const rewardThreshold = hasNewProjectShape ? BigInt(project.rewardThreshold ?? project[15 + fieldOffset + maxMintOffset] ?? 0) : 0n
+  const buyTaxBps = hasNewProjectShape ? Number(project.buyTaxBps ?? project[16 + fieldOffset + maxMintOffset] ?? 0) : 0
+  const sellTaxBps = hasNewProjectShape ? Number(project.sellTaxBps ?? project[17 + fieldOffset + maxMintOffset] ?? 0) : 0
+  const hasAdvancedProjectShape = project.transferTaxBps !== undefined
+  const advancedOffset = fieldOffset + maxMintOffset
+  const transferTaxBps = hasAdvancedProjectShape ? Number(project.transferTaxBps ?? project[18 + advancedOffset] ?? 0) : 0
+  const addLiquidityTaxBps = hasAdvancedProjectShape ? Number(project.addLiquidityTaxBps ?? project[19 + advancedOffset] ?? 0) : 0
+  const removeLiquidityTaxBps = hasAdvancedProjectShape ? Number(project.removeLiquidityTaxBps ?? project[20 + advancedOffset] ?? 0) : 0
+  const launchProtectionTaxBps = hasAdvancedProjectShape ? Number(project.launchProtectionTaxBps ?? project[21 + advancedOffset] ?? 0) : 0
+  const launchProtectionBlocks = hasAdvancedProjectShape ? Number(project.launchProtectionBlocks ?? project[22 + advancedOffset] ?? 0) : 0
+  const claimWait = hasAdvancedProjectShape ? Number(project.claimWait ?? project[23 + advancedOffset] ?? 0) : 60
+  const splitIndexOffset = hasAdvancedProjectShape ? 6 : 0
+  const splitOffset = fieldOffset + maxMintOffset + splitIndexOffset
+  const fundFeeBps = hasNewProjectShape ? Number(project.fundFeeBps ?? project[18 + splitOffset] ?? 0) : 0
+  const lpFeeBps = hasNewProjectShape ? Number(project.lpFeeBps ?? project[19 + splitOffset] ?? 0) : 0
+  const dividendFeeBps = hasNewProjectShape ? Number(project.dividendFeeBps ?? project[20 + splitOffset] ?? 0) : 0
+  const burnFeeBps = hasNewProjectShape ? Number(project.burnFeeBps ?? project[21 + splitOffset] ?? 0) : 0
+  const liquidityTokenBps = hasAdvancedProjectShape ? Number(project.liquidityTokenBps ?? project[22 + splitOffset] ?? 5000) : 5000
+
+  const token = new Contract(tokenAddress, tokenAbi, provider)
+  const vault = new Contract(vaultAddress, mintVaultAbi, provider)
+
+  const [
+    name,
+    symbol,
+    mintedCount,
+    whitelistMintedCount,
+    publicMintedCount,
+    vaultWhitelistLimit,
+    vaultPublicLimit,
+    refundDeadline,
+    finalized,
+    tokensPerMint,
+    userMintedCount,
+    userPaid,
+    refundAllowance,
+    whitelistRemaining,
+    totalWhitelistAllowance,
+    mintPaymentAllowance,
+    vaultTokenBalance,
+    userDividendUnpaid,
+  ] = await Promise.all([
+    token.name().catch(() => 'Unknown'),
+    token.symbol().catch(() => 'TOKEN'),
+    vault.mintedCount().catch(() => 0n),
+    vault.whitelistMintedCount().catch(() => 0n),
+    vault.publicMintedCount().catch(() => 0n),
+    vault.whitelistMintLimit().catch(() => whitelistMintCount),
+    vault.publicMintLimit().catch(() => publicMintCount),
+    vault.refundDeadline().catch(() => 0n),
+    vault.finalized().catch(() => false),
+    vault.tokensPerMint().catch(() => (mintCount > 0n ? totalSupply / mintCount : 0n)),
+    account && isAddress(account) ? vault.mintedByWallet(account).catch(() => 0n) : 0n,
+    account && isAddress(account) ? vault.paidByWallet(account).catch(() => 0n) : 0n,
+    account && isAddress(account) ? token.allowance(account, vaultAddress).catch(() => 0n) : 0n,
+    account && isAddress(account) ? vault.whitelistRemaining(account).catch(() => 0n) : 0n,
+    vault.totalWhitelistAllowance().catch(() => 0n),
+    account && isAddress(account) && paymentToken.toLowerCase() !== ZeroAddress
+      ? new Contract(paymentToken, tokenAbi, provider).allowance(account, vaultAddress).catch(() => 0n)
+      : 0n,
+    token.balanceOf(vaultAddress).catch(() => 0n),
+    account && isAddress(account) ? token.unpaidDividend(account).catch(() => 0n) : 0n,
+  ])
+
+  const mintedCountValue = BigInt(mintedCount)
+  const userMintedCountValue = BigInt(userMintedCount)
+  const refundTokenAmount = BigInt(tokensPerMint) * userMintedCountValue
+  const canRefund =
+    !Boolean(finalized) &&
+    Number(refundDeadline) > 0 &&
+    Date.now() >= Number(refundDeadline) * 1000 &&
+    BigInt(userPaid) > 0n &&
+    refundTokenAmount > 0n
+  const progress =
+    mintCount > 0n ? Math.min(100, Number((mintedCountValue * 10_000n) / mintCount) / 100) : 0
+  const metadata = parseMetadata(metadataUri)
+
+  return {
+    creator,
+    token: tokenAddress,
+    vault: vaultAddress,
+    paymentToken,
+    receiver,
+    platformFeeReceiver,
+    platformFeeBps,
+    name: String(name),
+    symbol: String(symbol),
+    description: metadata.description || '链上发射项目',
+    avatar: metadata.avatar || '',
+    website: metadata.website || '',
+    telegram: metadata.telegram || '',
+    xLink: metadata.x || metadata.xLink || '',
+    totalSupply: formatUnits(totalSupply, 18),
+    mintCount: mintCount.toString(),
+    whitelistMintCount: BigInt(vaultWhitelistLimit).toString(),
+    publicMintCount: BigInt(vaultPublicLimit).toString(),
+    mintPrice: formatMintPrice(mintPrice, paymentToken),
+    mintPriceWei: mintPrice.toString(),
+    maxMintPerWallet: maxMintPerWallet.toString(),
+    paymentSymbol: getPaymentSymbol(paymentToken),
+    mintedCount: mintedCountValue.toString(),
+    whitelistMintedCount: BigInt(whitelistMintedCount).toString(),
+    publicMintedCount: BigInt(publicMintedCount).toString(),
+    refundDeadline: Number(refundDeadline),
+    finalized: Boolean(finalized),
+    userMintedCount: userMintedCountValue.toString(),
+    refundTokenAmount: refundTokenAmount.toString(),
+    refundNeedsApproval: canRefund && BigInt(refundAllowance) < refundTokenAmount,
+    userRefundAmount: formatRefundAmount(BigInt(userPaid), paymentToken),
+    canRefund,
+    whitelistRemaining: BigInt(whitelistRemaining).toString(),
+    totalWhitelistAllowance: BigInt(totalWhitelistAllowance).toString(),
+    mintPaymentAllowance: BigInt(mintPaymentAllowance).toString(),
+    rewardToken,
+    rewardThreshold: formatUnits(rewardThreshold, 18),
+    userDividendUnpaid: BigInt(userDividendUnpaid).toString(),
+    userDividendUnpaidFormatted: formatUnits(BigInt(userDividendUnpaid), 18),
+    buyTaxBps,
+    sellTaxBps,
+    transferTaxBps,
+    addLiquidityTaxBps,
+    removeLiquidityTaxBps,
+    launchProtectionTaxBps,
+    launchProtectionBlocks,
+    claimWait,
+    fundFeeBps,
+    lpFeeBps,
+    dividendFeeBps,
+    burnFeeBps,
+    liquidityTokenBps,
+    vaultTokenBalance: formatUnits(BigInt(vaultTokenBalance), 18),
+    progress,
+    whitelistEnabled,
+    createdAt,
+  }
 }
 
 export function watchLaunchProjectEvents(projects: LaunchProject[], onUpdate: () => void) {

@@ -177,15 +177,25 @@ const copy = {
       consoleAria: '发币流程',
       consoleStats: [
         ['网络', 'BSC', '主网'],
-        ['铸造', '300', '0.01 BNB'],
         ['税费', '3 / 3', '销毁 + 分红'],
         ['模式', 'Mint', '白名单'],
+        ['Gas', '0.005 BNB', '创建代币'],
       ],
       consoleFlow: ['连接钱包', '工厂合约', '代币 + 金库'],
+      factoryCard: {
+        label: '工厂合约',
+        online: '在线',
+        offline: '离线',
+        unconfigured: '未配置',
+        verified: '已开源验证',
+        copy: '复制地址',
+        copied: '已复制',
+        view: 'BscScan',
+      },
       features: [
         ['01 部署', '0.005 BNB 创建代币', '真实链上交易，Factory 已开源验证。部署即上链，项目自动进入实时列表。'],
-        ['02 铸造', '独立 Mint 金库', '每个项目拥有独立 ERC20 和 Vault，用户 Mint 后即时到账，资产完全链上可查。'],
-        ['03 交易', '自动回购 + 分红', '买卖税自动回流，70% 销毁、30% 给 DOGE 持有者分红。打满后自动开盘并丢权限。'],
+        ['02 铸造', '独立 Mint 金库', '每个项目部署独立 ERC20 与铸造金库，用户 Mint 后即时到账，资产完全链上可查。'],
+        ['03 交易', '自动回购 + 分红', '交易税自动回流，可配置销毁、回流与持币分红。打满后自动开盘并丢权限。'],
       ],
     },
     projects: {
@@ -442,20 +452,30 @@ const copy = {
       title: 'BNB Chain 一键发币',
       subtitle:
         '部署带有白名单铸造金库、自动回购销毁与持币分红机制的 ERC20 代币。每次发射都由可审计的链上智能合约治理。',
-      launch: '立即发币',
-      openCommunity: '加入社区',
-      consoleAria: '发币流程',
+      launch: 'Launch Token',
+      openCommunity: 'Join Community',
+      consoleAria: 'Launch flow',
       consoleStats: [
-        ['代币', appSymbol, '1,000,000'],
-        ['铸造', '300', '0.01 BNB'],
-        ['税费', '3 / 3', '70 销毁 / 30 DOGE 分红'],
-        ['模式', '白名单', '自动回购'],
+        ['Network', 'BSC', 'Mainnet'],
+        ['Tax', '3 / 3', 'Burn + Rewards'],
+        ['Mode', 'Mint', 'Whitelist'],
+        ['Gas', '0.005 BNB', 'Create'],
       ],
-      consoleFlow: ['钱包', '工厂', '代币 + 金库'],
+      consoleFlow: ['Connect wallet', 'Factory contract', 'Token + Vault'],
+      factoryCard: {
+        label: 'Factory Contract',
+        online: 'Online',
+        offline: 'Offline',
+        unconfigured: 'Not configured',
+        verified: 'Verified',
+        copy: 'Copy',
+        copied: 'Copied',
+        view: 'BscScan',
+      },
       features: [
-        ['01 发行', '0.005 BNB 部署费', '通过已验证的 Factory 合约提交真实链上部署交易，确认后项目自动进入发射列表。'],
-        ['02 白名单铸造', '独立代币 + 金库', '每个项目部署独立的 ERC20 与铸造金库，白名单钱包在公开铸造前优先铸造。'],
-        ['03 自动回购', '70% 销毁 + 30% DOGE 分红', '交易税自动累积 BNB，每 60 秒处理一次可用 BNB 的 10% 且无最低门槛，自动流入回购销毁与 DOGE 持币分红。'],
+        ['01 Deploy', '0.005 BNB to create', 'Real on-chain transaction via verified Factory. Deployed projects enter the live list automatically.'],
+        ['02 Mint', 'Independent Vault', 'Each project deploys its own ERC20 and mint vault. Minted tokens arrive instantly and are fully on-chain.'],
+        ['03 Trade', 'Auto buyback + rewards', 'Trading tax flows back into burn, LP, and holder rewards. Auto opens trading and renounces once filled.'],
       ],
     },
     projects: {
@@ -1614,6 +1634,7 @@ function HomePage({
   wallet: WalletState
 }) {
   const [filter, setFilter] = useState<ProjectFilter>('all')
+  const [factoryCopied, setFactoryCopied] = useState(false)
   const normalizedQuery = projectQuery.trim().toLowerCase()
   const filteredProjects = useMemo(
     () =>
@@ -1706,7 +1727,7 @@ function HomePage({
             <span>{appSymbol} 发射协议</span>
             <strong>0.005 BNB</strong>
           </div>
-          <div className="console-grid">
+          <div className="console-grid compact">
             {text.home.consoleStats.map((item) => (
               <div key={item[0]}>
                 <small>{item[0]}</small>
@@ -1715,12 +1736,57 @@ function HomePage({
               </div>
             ))}
           </div>
-          <div className="console-flow">
-            <span>{text.home.consoleFlow[0]}</span>
-            <i />
-            <span>{text.home.consoleFlow[1]}</span>
-            <i />
-            <span>{text.home.consoleFlow[2]}</span>
+          <div className="console-flow compact">
+            {text.home.consoleFlow.map((step, index) => (
+              <span key={step}>
+                <em>{String(index + 1).padStart(2, '0')}</em>
+                {step}
+              </span>
+            ))}
+          </div>
+          <div className="factory-card">
+            <div className="factory-card-head">
+              <span>{text.home.factoryCard.label}</span>
+              <span className={isLaunchpadConfigured ? 'online' : 'offline'}>
+                {isLaunchpadConfigured ? text.home.factoryCard.online : text.home.factoryCard.offline}
+              </span>
+            </div>
+            <div className="factory-card-body">
+              <strong>
+                {isLaunchpadConfigured
+                  ? shortAddress(launchpadConfig.factoryAddress)
+                  : text.home.factoryCard.unconfigured}
+              </strong>
+              {isLaunchpadConfigured && (
+                <span className="verified-badge">
+                  <ShieldCheck size={12} />
+                  {text.home.factoryCard.verified}
+                </span>
+              )}
+            </div>
+            {isLaunchpadConfigured && (
+              <div className="factory-card-actions">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await copyTextToClipboard(launchpadConfig.factoryAddress)
+                    setFactoryCopied(true)
+                    window.setTimeout(() => setFactoryCopied(false), 1400)
+                  }}
+                >
+                  {factoryCopied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+                  {factoryCopied ? text.home.factoryCard.copied : text.home.factoryCard.copy}
+                </button>
+                <a
+                  href={`${BNB_CHAIN.blockExplorerUrls[0]}/address/${launchpadConfig.factoryAddress}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ExternalLink size={14} />
+                  {text.home.factoryCard.view}
+                </a>
+              </div>
+            )}
           </div>
         </aside>
       </section>
