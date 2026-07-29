@@ -730,7 +730,7 @@ const paymentTokenNotes: Record<Language, Record<string, string>> = {
     USDT: 'BSC USDT',
   },
   en: {
-    BNB: '原生 BNB 铸造',
+    BNB: 'Native BNB mint',
     USDT: 'BSC USDT',
   },
 }
@@ -3596,14 +3596,9 @@ function TaxRing({
   totalLabel: string
 }) {
   let cursor = 0
-  const visibleLegendItems = allocationMeta.filter((item) => item.key !== 'marketing')
-  const displayAllocation = {
-    ...allocation,
-    burn: allocation.burn + allocation.marketing,
-  }
-  const stops = visibleLegendItems.map((item) => {
+  const stops = allocationMeta.map((item) => {
     const start = cursor
-    cursor += displayAllocation[item.key]
+    cursor += allocation[item.key]
     return `${item.color} ${start}% ${cursor}%`
   })
   const style = {
@@ -3617,14 +3612,14 @@ function TaxRing({
         <span>{totalLabel}</span>
       </div>
       <div className="tax-ring-legend">
-        {visibleLegendItems.map((item) => {
+        {allocationMeta.map((item) => {
           const itemText = allocationTranslations[language][item.key]
 
           return (
             <span key={item.key} style={{ '--dot-color': item.color } as CSSProperties}>
               <i />
               {itemText.label}
-              <b>{displayAllocation[item.key]}%</b>
+              <b>{allocation[item.key]}%</b>
             </span>
           )
         })}
