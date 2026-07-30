@@ -1,1 +1,2 @@
-/* /index.html 200
+/api/*  https://xueshutools.cn/apple-api/:splat  200
+/health https://xueshutools.cn/apple-api/health   200
