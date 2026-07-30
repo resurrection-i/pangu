@@ -54,7 +54,7 @@ contract AppleLaunchFactory is Ownable, ReentrancyGuard {
     uint16 public constant FORCED_LP_FEE_BPS = 0;
     uint16 public constant FORCED_DIVIDEND_FEE_BPS = 3_000;
     uint16 public constant FORCED_BURN_FEE_BPS = 5_000;
-    address public constant DEFAULT_REWARD_TOKEN = 0xbA2aE424d960c26247Dd6c32edC70B295c744C43;
+    address public constant DEFAULT_REWARD_TOKEN = 0x55d398326f99059fF775485246999027B3197955;
 
     uint256 public creationFee;
     address public feeRecipient;

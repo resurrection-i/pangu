@@ -435,7 +435,7 @@ async function findVanitySalt(body) {
   const tokenFactory = new ContractFactory(tokenArtifact.abi, tokenArtifact.bytecode);
   const rewardToken =
     params.rewardToken === ZeroAddress
-      ? process.env.DEFAULT_REWARD_TOKEN || "0xbA2aE424d960c26247Dd6c32edC70B295c744C43"
+      ? process.env.DEFAULT_REWARD_TOKEN || "0x55d398326f99059fF775485246999027B3197955"
       : params.rewardToken;
   const [platformFeeReceiver, tokenDeployer] = await Promise.all([
     factory.feeRecipient().then((value) => getAddress(value)),
@@ -532,7 +532,7 @@ async function findVanitySalt(body) {
 async function readFactoryRequiredSuffix() {
   try {
     const suffix = Number(await factory.requiredTokenSuffix());
-    const nibbles = await factory.requiredTokenSuffixNibbles().then(Number).catch(() => 6);
+    const nibbles = await factory.requiredTokenSuffixNibbles().then(Number).catch(() => 4);
     return nibbles > 0 ? suffix.toString(16).padStart(nibbles, "0") : "";
   } catch {
     return "";

@@ -1177,7 +1177,7 @@ async function toFactoryParams(draft: LaunchDraft, locale: LaunchpadLocale): Pro
   const form = draft.form
   const advancedTax = draft.advancedTax
   const paymentToken = normalizeAddress(form.paymentToken || ZeroAddress, text.paymentToken, locale)
-  const rewardToken = normalizeAddress(form.rewardToken || DOGE_ADDRESS, text.rewardToken, locale)
+  const rewardToken = normalizeAddress(form.rewardToken || USDT_ADDRESS, text.rewardToken, locale)
   const receiver = normalizeAddress(form.receiverWallet, text.receiver, locale)
   const mintPrice =
     paymentToken.toLowerCase() === ZeroAddress ? parseEther(form.mintPrice) : parseUnits(form.mintPrice, 18)
