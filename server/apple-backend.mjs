@@ -102,7 +102,7 @@ const server = createServer(async (request, response) => {
 
     const url = new URL(request.url || "/", `http://${request.headers.host || "localhost"}`);
 
-    if (request.method === "GET" && url.pathname === "/health") {
+    if (request.method === "GET" && (url.pathname === "/health" || url.pathname === "/api/health")) {
       sendJson(response, 200, {
         ok: true,
         chainId,
