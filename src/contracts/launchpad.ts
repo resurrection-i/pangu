@@ -109,19 +109,64 @@ async function asyncPool<T, R>(concurrency: number, items: T[], task: (item: T) 
 
 async function getFastestReadProvider(): Promise<JsonRpcProvider> {
   if (cachedReadProvider && Date.now() - cachedReadProviderAt < READ_PROVIDER_CACHE_MS) {
-    return cachedReadProvider
+    try {
+      await Promise.race([
+        cachedReadProvider.getBlockNumber(),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+      ])
+      return cachedReadProvider
+    } catch {
+      try {
+        cachedReadProvider.destroy()
+      } catch {}
+      cachedReadProvider = null
+    }
   }
 
   const candidates = BNB_CHAIN.rpcUrls.map(
     (url) => new JsonRpcProvider(url, launchpadConfig.chainId, { staticNetwork: true }),
   )
 
-  const fastest = await Promise.race(
+  const results = await Promise.allSettled(
     candidates.map(async (provider) => {
-      await provider.getBlockNumber()
-      return provider
+      const start = Date.now()
+      await Promise.race([
+        provider.getBlockNumber(),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+      ])
+      return { provider, latency: Date.now() - start }
     }),
-  ).catch(() => candidates[0])
+  )
+
+  results.forEach((result, index) => {
+    if (result.status === 'rejected') {
+      try {
+        candidates[index].destroy()
+      } catch {}
+    }
+  })
+
+  const successful = results
+    .map((result, index) => ({ result, provider: candidates[index] }))
+    .filter(({ result }) => result.status === 'fulfilled')
+    .map(({ result, provider }) => ({
+      provider,
+      latency: (result as PromiseFulfilledResult<{ latency: number }>).value.latency,
+    }))
+    .sort((a, b) => a.latency - b.latency)
+
+  if (successful.length === 0) {
+    cachedReadProvider = candidates[0]
+    cachedReadProviderAt = Date.now()
+    return candidates[0]
+  }
+
+  const fastest = successful[0].provider
+  successful.slice(1).forEach(({ provider }) => {
+    try {
+      provider.destroy()
+    } catch {}
+  })
 
   cachedReadProvider = fastest
   cachedReadProviderAt = Date.now()
