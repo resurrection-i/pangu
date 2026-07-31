@@ -363,8 +363,8 @@ const copy = {
       onchain: '链上记录',
       receiverWallet: '接收钱包',
       rewardToken: '分红代币地址',
-      rewardTokenPlaceholder: '留空默认 DOGE',
-      rewardTokenDefault: `默认 DOGE：${shortAddress(DOGE_ADDRESS)}`,
+      rewardTokenPlaceholder: '留空默认 USDT',
+      rewardTokenDefault: `默认 USDT：${shortAddress(USDT_ADDRESS)}`,
       rewardThreshold: '持仓门槛',
       section06: '06 可选链接',
       linksTitle: '社区入口',
@@ -645,8 +645,8 @@ const copy = {
       onchain: 'On-chain record',
       receiverWallet: 'Receiver wallet',
       rewardToken: 'Holder reward token',
-      rewardTokenPlaceholder: 'Blank defaults to DOGE',
-      rewardTokenDefault: `30% dividend-side rewards default to DOGE: ${shortAddress(DOGE_ADDRESS)}`,
+      rewardTokenPlaceholder: 'Blank defaults to USDT',
+      rewardTokenDefault: `30% dividend-side rewards default to USDT: ${shortAddress(USDT_ADDRESS)}`,
       rewardThreshold: 'Reward threshold',
       section06: '06 Optional links',
       linksTitle: 'Community links',
@@ -3284,7 +3284,7 @@ function LaunchPage({
                   <div>
                     <span>持币分红</span>
                     <strong>30%</strong>
-                    <em>BNB 买入 DOGE 并注入分红池。</em>
+                    <em>BNB 买入 USDT 并注入分红池。</em>
                   </div>
                   <div>
                     <span>自动循环</span>
@@ -3306,7 +3306,7 @@ function LaunchPage({
                     )
                   })}
                   </div>
-                  <p className="tax-note">固定项目路由：70% 回购销毁，30% DOGE 持币分红，0% LP 路由。</p>
+                  <p className="tax-note">固定项目路由：70% 回购销毁，30% USDT 持币分红，0% LP 路由。</p>
                 </div>
               </div>
             </div>
