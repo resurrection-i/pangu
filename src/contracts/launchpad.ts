@@ -23,7 +23,7 @@ const configuredVanitySuffix = String(import.meta.env.VITE_VANITY_SUFFIX ?? '')
   .trim()
   .replace(/^0x/i, '')
   .toLowerCase()
-const DEFAULT_APP_BACKEND_URL = 'https://xueshutools.cn/apple-api'
+const DEFAULT_APP_BACKEND_URL = ''
 const configuredBackendUrl =
   String(import.meta.env.VITE_APP_BACKEND_URL ?? '').trim() || DEFAULT_APP_BACKEND_URL
 const configuredFactoryAddress = String(
@@ -84,14 +84,16 @@ const TRADING_ENABLED_EVENT_TOPIC = id('TradingEnabled()')
 
 let cachedReadProvider: JsonRpcProvider | null = null
 let cachedReadProviderAt = 0
-const READ_PROVIDER_CACHE_MS = 45_000
+let lastWorkingRpcIndex = 0
+const READ_PROVIDER_CACHE_MS = 10_000
+const READ_PROVIDER_TIMEOUT_MS = 5_000
 
 function getReadProviderSync(): JsonRpcProvider {
   if (cachedReadProvider) {
     return cachedReadProvider
   }
 
-  return new JsonRpcProvider(BNB_CHAIN.rpcUrls[0], launchpadConfig.chainId, { staticNetwork: true })
+  return new JsonRpcProvider(BNB_CHAIN.rpcUrls[lastWorkingRpcIndex], launchpadConfig.chainId, { staticNetwork: true })
 }
 
 async function asyncPool<T, R>(concurrency: number, items: T[], task: (item: T) => Promise<R>): Promise<R[]> {
@@ -109,68 +111,42 @@ async function asyncPool<T, R>(concurrency: number, items: T[], task: (item: T) 
 
 async function getFastestReadProvider(): Promise<JsonRpcProvider> {
   if (cachedReadProvider && Date.now() - cachedReadProviderAt < READ_PROVIDER_CACHE_MS) {
-    try {
-      await Promise.race([
-        cachedReadProvider.getBlockNumber(),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
-      ])
-      return cachedReadProvider
-    } catch {
-      try {
-        cachedReadProvider.destroy()
-      } catch {}
-      cachedReadProvider = null
-    }
+    return cachedReadProvider
   }
 
-  const candidates = BNB_CHAIN.rpcUrls.map(
-    (url) => new JsonRpcProvider(url, launchpadConfig.chainId, { staticNetwork: true }),
-  )
+  if (cachedReadProvider) {
+    try {
+      cachedReadProvider.destroy()
+    } catch {}
+    cachedReadProvider = null
+  }
 
-  const results = await Promise.allSettled(
-    candidates.map(async (provider) => {
-      const start = Date.now()
+  const rpcUrls = BNB_CHAIN.rpcUrls
+  const startIndex = lastWorkingRpcIndex
+  for (let i = 0; i < rpcUrls.length; i++) {
+    const index = (startIndex + i) % rpcUrls.length
+    const url = rpcUrls[index]
+    const provider = new JsonRpcProvider(url, launchpadConfig.chainId, { staticNetwork: true })
+    try {
       await Promise.race([
         provider.getBlockNumber(),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), READ_PROVIDER_TIMEOUT_MS)),
       ])
-      return { provider, latency: Date.now() - start }
-    }),
-  )
-
-  results.forEach((result, index) => {
-    if (result.status === 'rejected') {
+      cachedReadProvider = provider
+      cachedReadProviderAt = Date.now()
+      lastWorkingRpcIndex = index
+      return provider
+    } catch {
       try {
-        candidates[index].destroy()
+        provider.destroy()
       } catch {}
     }
-  })
-
-  const successful = results
-    .map((result, index) => ({ result, provider: candidates[index] }))
-    .filter(({ result }) => result.status === 'fulfilled')
-    .map(({ result, provider }) => ({
-      provider,
-      latency: (result as PromiseFulfilledResult<{ latency: number }>).value.latency,
-    }))
-    .sort((a, b) => a.latency - b.latency)
-
-  if (successful.length === 0) {
-    cachedReadProvider = candidates[0]
-    cachedReadProviderAt = Date.now()
-    return candidates[0]
   }
 
-  const fastest = successful[0].provider
-  successful.slice(1).forEach(({ provider }) => {
-    try {
-      provider.destroy()
-    } catch {}
-  })
-
-  cachedReadProvider = fastest
+  const fallback = new JsonRpcProvider(rpcUrls[0], launchpadConfig.chainId, { staticNetwork: true })
+  cachedReadProvider = fallback
   cachedReadProviderAt = Date.now()
-  return fastest
+  return fallback
 }
 
 export const isLaunchpadConfigured =
