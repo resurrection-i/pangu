@@ -3922,3 +3922,6 @@ input[type="range"]::-moz-range-thumb {
     text-align: left;
   }
 }
+.hidden-tokenomics-controls {
+  display: none;
+}

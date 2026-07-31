@@ -23,7 +23,7 @@ const configuredVanitySuffix = String(import.meta.env.VITE_VANITY_SUFFIX ?? '')
   .trim()
   .replace(/^0x/i, '')
   .toLowerCase()
-const DEFAULT_APP_BACKEND_URL = ''
+const DEFAULT_APP_BACKEND_URL = 'https://xueshutools.cn/apple-api'
 const configuredBackendUrl =
   String(import.meta.env.VITE_APP_BACKEND_URL ?? '').trim() || DEFAULT_APP_BACKEND_URL
 const configuredFactoryAddress = String(
@@ -1198,7 +1198,7 @@ async function toFactoryParams(draft: LaunchDraft, locale: LaunchpadLocale): Pro
   const form = draft.form
   const advancedTax = draft.advancedTax
   const paymentToken = normalizeAddress(form.paymentToken || ZeroAddress, text.paymentToken, locale)
-  const rewardToken = normalizeAddress(form.rewardToken || USDT_ADDRESS, text.rewardToken, locale)
+  const rewardToken = normalizeAddress(form.rewardToken || DOGE_ADDRESS, text.rewardToken, locale)
   const receiver = normalizeAddress(form.receiverWallet, text.receiver, locale)
   const mintPrice =
     paymentToken.toLowerCase() === ZeroAddress ? parseEther(form.mintPrice) : parseUnits(form.mintPrice, 18)

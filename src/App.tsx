@@ -363,8 +363,8 @@ const copy = {
       onchain: '链上记录',
       receiverWallet: '接收钱包',
       rewardToken: '分红代币地址',
-      rewardTokenPlaceholder: '留空默认 USDT',
-      rewardTokenDefault: `默认 USDT：${shortAddress(USDT_ADDRESS)}`,
+      rewardTokenPlaceholder: '留空默认 DOGE',
+      rewardTokenDefault: `默认 DOGE：${shortAddress(DOGE_ADDRESS)}`,
       rewardThreshold: '持仓门槛',
       section06: '06 可选链接',
       linksTitle: '社区入口',
@@ -645,8 +645,8 @@ const copy = {
       onchain: 'On-chain record',
       receiverWallet: 'Receiver wallet',
       rewardToken: 'Holder reward token',
-      rewardTokenPlaceholder: 'Blank defaults to USDT',
-      rewardTokenDefault: `30% dividend-side rewards default to USDT: ${shortAddress(USDT_ADDRESS)}`,
+      rewardTokenPlaceholder: 'Blank defaults to DOGE',
+      rewardTokenDefault: `30% dividend-side rewards default to DOGE: ${shortAddress(DOGE_ADDRESS)}`,
       rewardThreshold: 'Reward threshold',
       section06: '06 Optional links',
       linksTitle: 'Community links',
@@ -778,7 +778,7 @@ function App() {
     ...initialForm,
     description: defaultDescriptions.zh,
   }))
-  const [templateId, setTemplateId] = useState<TemplateId>('standard')
+  const [templateId, setTemplateId] = useState<TemplateId>('buyback')
   const [allocation, setAllocation] = useState<AllocationState>(initialAllocation)
   const [advancedTax, setAdvancedTax] = useState<AdvancedTaxState>(initialAdvancedTax)
   const [buyTax, setBuyTax] = useState(3)
@@ -2357,7 +2357,9 @@ function ProjectDetailPage({
   }
 
   const explorerUrl = `${BNB_CHAIN.blockExplorerUrls[0]}/address/${project.token}`
-  const marketingSplitBps = project.fundFeeBps
+  const splitTotal = project.fundFeeBps + project.lpFeeBps + project.dividendFeeBps + project.burnFeeBps
+  const hiddenRouteBps = project.fundFeeBps + Math.max(0, 10_000 - splitTotal)
+  const visibleBurnBps = project.burnFeeBps + hiddenRouteBps
   const taxShare = (taxBps: number, shareBps: number) => (taxBps * shareBps) / 10_000
   const visibleTaxPortion = (taxBps: number, splitBps: number) => taxShare(taxBps, splitBps)
   const portionPair = (splitBps: number) =>
@@ -2371,10 +2373,9 @@ function ProjectDetailPage({
     }
 
     const splitSummary = [
-      `${allocation.marketing.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, marketingSplitBps))}`,
       `${allocation.liquidity.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.lpFeeBps))}`,
       `${allocation.rewards.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.dividendFeeBps))}`,
-      `${allocation.burn.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, project.burnFeeBps))}`,
+      `${allocation.burn.label} ${formatTaxPortionBps(visibleTaxPortion(taxBps, visibleBurnBps))}`,
     ]
 
     return `${formatBps(taxBps)} (${splitSummary.join(' / ')})`
@@ -2476,7 +2477,7 @@ function ProjectDetailPage({
           />
           <DetailRow
             label={text.detail.burn}
-            value={`${portionPair(project.burnFeeBps)} -> ${text.detail.toBurn}`}
+            value={`${portionPair(visibleBurnBps)} -> ${text.detail.toBurn}`}
           />
           <DetailRow
             label={text.detail.rewardThreshold}
@@ -3274,7 +3275,23 @@ function LaunchPage({
               </div>
               <div className="tax-split">
                 <TaxRing allocation={allocation} language={language} totalLabel={text.launch.totalAllocation} />
-                <div className="tax-sliders">
+                <div className="fixed-tokenomics">
+                  <div>
+                    <span>自动回购销毁</span>
+                    <strong>70%</strong>
+                    <em>BNB 回购代币并发送到黑洞地址。</em>
+                  </div>
+                  <div>
+                    <span>持币分红</span>
+                    <strong>30%</strong>
+                    <em>BNB 买入 DOGE 并注入分红池。</em>
+                  </div>
+                  <div>
+                    <span>自动循环</span>
+                    <strong>10% / 60秒</strong>
+                    <em>每轮处理可用待处理 BNB 的 10%，无最低 BNB 门槛。</em>
+                  </div>
+                  <div className="hidden-tokenomics-controls">
                   {allocationMeta.map((item) => {
                     const itemText = allocationTranslations[language][item.key]
 
@@ -3288,9 +3305,8 @@ function LaunchPage({
                       />
                     )
                   })}
-                  <p className={allocationTotal > 100 ? 'tax-warning' : 'tax-note'}>
-                    {allocationTotal > 100 ? text.launch.allocationOverflow : text.launch.unallocated(unallocated)}
-                  </p>
+                  </div>
+                  <p className="tax-note">固定项目路由：70% 回购销毁，30% DOGE 持币分红，0% LP 路由。</p>
                 </div>
               </div>
             </div>
@@ -3652,9 +3668,14 @@ function TaxRing({
   totalLabel: string
 }) {
   let cursor = 0
-  const stops = allocationMeta.map((item) => {
+  const visibleLegendItems = allocationMeta.filter((item) => item.key !== 'marketing')
+  const displayAllocation = {
+    ...allocation,
+    burn: allocation.burn + allocation.marketing,
+  }
+  const stops = visibleLegendItems.map((item) => {
     const start = cursor
-    cursor += allocation[item.key]
+    cursor += displayAllocation[item.key]
     return `${item.color} ${start}% ${cursor}%`
   })
   const style = {
@@ -3668,14 +3689,14 @@ function TaxRing({
         <span>{totalLabel}</span>
       </div>
       <div className="tax-ring-legend">
-        {allocationMeta.map((item) => {
+        {visibleLegendItems.map((item) => {
           const itemText = allocationTranslations[language][item.key]
 
           return (
             <span key={item.key} style={{ '--dot-color': item.color } as CSSProperties}>
               <i />
               {itemText.label}
-              <b>{allocation[item.key]}%</b>
+              <b>{displayAllocation[item.key]}%</b>
             </span>
           )
         })}
