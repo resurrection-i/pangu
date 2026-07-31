@@ -1182,7 +1182,6 @@ export function watchLaunchProjectEvents(projects: LaunchProject[], onUpdate: ()
     for (const listener of listeners) {
       provider.off(listener.filter, listener.handler)
     }
-    provider.destroy()
   }
 }
 
