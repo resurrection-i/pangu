@@ -23,7 +23,7 @@ const configuredVanitySuffix = String(import.meta.env.VITE_VANITY_SUFFIX ?? '')
   .trim()
   .replace(/^0x/i, '')
   .toLowerCase()
-const DEFAULT_APP_BACKEND_URL = 'same-origin'
+const DEFAULT_APP_BACKEND_URL = 'https://xueshutools.cn/apple-api'
 const configuredBackendUrl =
   String(import.meta.env.VITE_APP_BACKEND_URL ?? '').trim() || DEFAULT_APP_BACKEND_URL
 const configuredFactoryAddress = String(
@@ -1249,18 +1249,32 @@ async function resolveLaunchSalt(
   }
 
   try {
-    const response = await fetch(buildBackendUrl('/api/vanity-salt'), {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        suffix: launchpadConfig.vanitySuffix,
-        maxIterations: 5000000,
-        creator,
-        params: serializeFactoryParams(params),
-      }),
+    const requestBody = JSON.stringify({
+      suffix: launchpadConfig.vanitySuffix,
+      maxIterations: 5000000,
+      creator,
+      params: serializeFactoryParams(params),
     })
+    let response: Response | null = null
+    let lastError: unknown = null
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        response = await fetch(buildBackendUrl('/api/vanity-salt'), {
+          method: 'POST',
+          cache: 'no-store',
+          headers: { 'content-type': 'application/json' },
+          body: requestBody,
+        })
+        if (response.ok) break
+        lastError = new Error(`vanity http ${response.status}`)
+      } catch (error) {
+        lastError = error
+      }
+      await delay(700 * (attempt + 1))
+    }
 
-    if (!response.ok) {
+    if (!response || !response.ok) {
+      void lastError
       throw new Error(text.vanityUnavailable)
     }
 
