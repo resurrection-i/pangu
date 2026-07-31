@@ -3772,7 +3772,7 @@ function CommunityPage({
         </div>
         <div className="community-badge" aria-label="社区徽章">
           <strong>{appSymbol}</strong>
-          <span>20% 营销 | 0% 回流 | 30% DOGE 分红 | 50% 销毁 | BSC</span>
+          <span>20% 营销 | 0% 回流 | 30% USDT 分红 | 50% 销毁 | BSC</span>
         </div>
       </section>
 
