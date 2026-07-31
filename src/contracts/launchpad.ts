@@ -23,7 +23,7 @@ const configuredVanitySuffix = String(import.meta.env.VITE_VANITY_SUFFIX ?? '')
   .trim()
   .replace(/^0x/i, '')
   .toLowerCase()
-const DEFAULT_APP_BACKEND_URL = 'https://xueshutools.cn/apple-api'
+const DEFAULT_APP_BACKEND_URL = 'same-origin'
 const configuredBackendUrl =
   String(import.meta.env.VITE_APP_BACKEND_URL ?? '').trim() || DEFAULT_APP_BACKEND_URL
 const configuredFactoryAddress = String(
@@ -112,13 +112,6 @@ async function asyncPool<T, R>(concurrency: number, items: T[], task: (item: T) 
 async function getFastestReadProvider(): Promise<JsonRpcProvider> {
   if (cachedReadProvider && Date.now() - cachedReadProviderAt < READ_PROVIDER_CACHE_MS) {
     return cachedReadProvider
-  }
-
-  if (cachedReadProvider) {
-    try {
-      cachedReadProvider.destroy()
-    } catch {}
-    cachedReadProvider = null
   }
 
   const rpcUrls = BNB_CHAIN.rpcUrls
