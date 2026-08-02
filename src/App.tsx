@@ -788,6 +788,10 @@ function App() {
   const [liquidityTokenPercent, setLiquidityTokenPercent] = useState('50')
   const [deployState, setDeployState] = useState<DeployState>('draft')
   const [notice, setNotice] = useState<Notice | null>(null)
+  const hiddenTokens = new Set([
+    '0xA8AA957f328069b35Ece7fC5c77Bf4fCC8dE8888',
+    '0xfF6bAA1f5Ee387345ef261eE03127133E52F8888',
+  ].map((a) => a.toLowerCase()))
   const [projects, setProjects] = useState<LaunchProject[]>([])
   const [projectsStatus, setProjectsStatus] = useState<ProjectsStatus>('idle')
   const [projectsError, setProjectsError] = useState('')
@@ -840,7 +844,7 @@ function App() {
           return
         }
 
-        setProjects(items)
+        setProjects(items.filter((p) => !hiddenTokens.has(p.token.toLowerCase())))
         setProjectsStatus('ready')
       })
       .catch((error) => {
